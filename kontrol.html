@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><title>Dosya kontrol</title></head>
+<body style="font-family:Segoe UI,Arial,sans-serif;padding:30px;max-width:900px;margin:auto">
+<h2>Dosya kontrol</h2>
+<label id="z" style="display:block;border:3px dashed #0f6e6e;border-radius:14px;padding:50px;text-align:center;font-size:20px;cursor:pointer">Excel dosyasini buraya birakin ya da tiklayip secin<input id="i" type="file" style="display:none"></label>
+<pre id="o" style="font-size:16px;background:#f3f5f7;padding:16px;border-radius:10px;white-space:pre-wrap"></pre>
+<script>
+const z=document.getElementById('z'),o=document.getElementById('o');
+async function show(files,items){let t='Dosya sayisi: '+files.length+'\n';if(items)t+='Birakilan ogeler: '+items.map(x=>x.kind+'/'+x.type).join(', ')+'\n';
+for(const f of files){t+='\nAd: '+f.name+'\nBoyut: '+f.size+' bayt\nTur: '+(f.type||'-')+'\nDegistirilme: '+new Date(f.lastModified).toLocaleString('tr-TR')+'\n';
+try{const b=new Uint8Array(await f.slice(0,16).arrayBuffer());t+='Ilk baytlar: '+[...b].map(x=>x.toString(16).padStart(2,'0')).join(' ')+'\n';const all=await f.arrayBuffer();t+='Okunan: '+all.byteLength+' bayt\n'}catch(err){t+='OKUMA HATASI: '+err.name+' - '+err.message+'\n'}}
+o.textContent=t}
+z.addEventListener('dragover',e=>e.preventDefault());
+z.addEventListener('drop',e=>{e.preventDefault();show([...e.dataTransfer.files],[...e.dataTransfer.items].map(x=>({kind:x.kind,type:x.type})))});
+document.getElementById('i').addEventListener('change',e=>show([...e.target.files]));
+</script></body></html>

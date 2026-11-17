@@ -152,7 +152,7 @@ async function unzipText(z,name){const k=Object.keys(z).find(x=>x.toLowerCase()=
   return new TextDecoder().decode(d)}
 function colIdx(ref){let n=0;for(const ch of ref){const c=ch.charCodeAt(0);if(c<65||c>90)break;n=n*26+(c-64)}return n-1}
 async function readXlsx(buf){
-  const z=unzipIndex(buf);let wbPath='xl/workbook.xml';const root=await unzipText(z,'_rels/.rels');if(root){const t=(root.match(/<(?:\w+:)?Relationship\b[^>]*>/g)||[]).find(x=>/officeDocument/.test(attr(x,'Type')||''));if(t)wbPath=attr(t,'Target').replace(/^\//,'')}
+  const z=unzipIndex(buf);let wbPath='xl/workbook.xml';const root=await unzipText(z,'_rels/.rels');if(root){const t=(root.match(/<(?:\w+:)?Relationship\b[^>]*>/g)||[]).find(x=>/\/officeDocument$/.test(attr(x,'Type')||''));if(t)wbPath=attr(t,'Target').replace(/^\//,'')}
   const wbDir=wbPath.includes('/')?wbPath.slice(0,wbPath.lastIndexOf('/')+1):'';const wb=await unzipText(z,wbPath);if(!wb)throw new Error('Excel çalışma kitabı bulunamadı');
   const rels=await unzipText(z,wbDir+'_rels/'+wbPath.slice(wbDir.length)+'.rels')||'';const R={};(rels.match(/<(?:\w+:)?Relationship\b[^>]*>/g)||[]).forEach(t=>{R[attr(t,'Id')]=attr(t,'Target')});
   const ssT=(rels.match(/<(?:\w+:)?Relationship\b[^>]*>/g)||[]).find(x=>/sharedStrings/.test(attr(x,'Type')||''));const ssx=await unzipText(z,ssT?(attr(ssT,'Target').startsWith('/')?attr(ssT,'Target').slice(1):wbDir+attr(ssT,'Target')):wbDir+'sharedStrings.xml')||'';const SS=[];

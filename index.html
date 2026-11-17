@@ -720,6 +720,52 @@ async function autoTasks(){if(autoBusy||!isAdmin())return;const s=S.settings;if(
   try{const t=todayStr();if(s.autoDaily&&s.lastDailyBackup!==t){await patchSettings({lastDailyBackup:t});await sendBackupMail('Günlük otomatik yedek')}
     const prev=shiftMonth(ym(t),-1);if(s.autoMonthly&&(s.lastMonthlyReport||'')<prev){const d=await store.getMonth(prev);if(d){await patchSettings({lastMonthlyReport:prev});S.months[prev]=S.months[prev]||d;await sendMonthReport(prev)}}}catch(e){console.error(e)}finally{autoBusy=false}}
 
+/* ===== PAROLALI EXCEL (Office şifreleme) ===== */
+const rdU32=(a,o)=>new DataView(a.buffer,a.byteOffset,a.byteLength).getUint32(o,true);
+const rdU16=(a,o)=>new DataView(a.buffer,a.byteOffset,a.byteLength).getUint16(o,true);
+function readCfb(u8){
+  const ss=1<<rdU16(u8,30),mss=1<<rdU16(u8,32),nfat=rdU32(u8,44),dirStart=rdU32(u8,48),miniCut=rdU32(u8,56),miniFat=rdU32(u8,60),difat=rdU32(u8,68),nDifat=rdU32(u8,72);
+  const END=0xFFFFFFFA,sec=i=>u8.subarray(512+i*ss,512+(i+1)*ss);
+  let fs=[];for(let i=0;i<109;i++)fs.push(rdU32(u8,76+i*4));let x=difat;
+  for(let k=0;k<nDifat&&x<END;k++){const s=sec(x);for(let j=0;j<ss/4-1;j++)fs.push(rdU32(s,j*4));x=rdU32(s,ss-4)}
+  fs=fs.filter(f=>f<END).slice(0,nfat);const fat=[];fs.forEach(f=>{const s=sec(f);for(let j=0;j<ss/4;j++)fat.push(rdU32(s,j*4))});
+  const chain=(s,t)=>{const o=[];let g=0;while(s<END&&g++<1e6){o.push(s);s=t[s]}return o};
+  const cat=(parts,len)=>{const o=new Uint8Array(len);let p=0;for(const q of parts){const n=Math.min(q.length,len-p);if(n<=0)break;o.set(q.subarray(0,n),p);p+=n}return o};
+  const rd=s=>{const c=chain(s,fat);return cat(c.map(sec),c.length*ss)};
+  const dirs=rd(dirStart),ents=[];
+  for(let i=0;i<dirs.length/128;i++){const e=dirs.subarray(i*128,(i+1)*128),nl=rdU16(e,64);let name='';for(let j=0;j<Math.max(0,nl-2);j+=2)name+=String.fromCharCode(rdU16(e,j));
+    ents.push({name,type:e[66],start:rdU32(e,116),size:rdU32(e,120)})}
+  const root=ents[0],mini=root.start<END?rd(root.start):new Uint8Array(0);let mfat=[];
+  if(miniFat<END){const b=rd(miniFat);for(let j=0;j<b.length/4;j++)mfat.push(rdU32(b,j*4))}
+  const out={};ents.forEach(e=>{if(e.type!==2)return;if(e.size<miniCut){const c=chain(e.start,mfat);out[e.name]=cat(c.map(i=>mini.subarray(i*mss,(i+1)*mss)),e.size)}else{const c=chain(e.start,fat);out[e.name]=cat(c.map(sec),e.size)}});
+  return out}
+const HNAME={SHA1:'SHA-1',SHA256:'SHA-256',SHA384:'SHA-384',SHA512:'SHA-512'};
+const b64u8=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const catU8=(...a)=>{const o=new Uint8Array(a.reduce((n,x)=>n+x.length,0));let p=0;a.forEach(x=>{o.set(x,p);p+=x.length});return o};
+const le32=i=>new Uint8Array([i&255,(i>>8)&255,(i>>16)&255,(i>>>24)&255]);
+async function aesRaw(keyBytes,iv,data){// şifreli bloklar dolgu içermez; WebCrypto için geçerli dolgu bloğu eklenir
+  const sub=crypto.subtle,k=await sub.importKey('raw',keyBytes,{name:'AES-CBC'},false,['encrypt','decrypt']);
+  const last=data.length>=16?data.subarray(data.length-16):iv;const p=new Uint8Array(16);for(let i=0;i<16;i++)p[i]=last[i]^16;
+  const extra=new Uint8Array(await sub.encrypt({name:'AES-CBC',iv:new Uint8Array(16)},k,p)).subarray(0,16);
+  return new Uint8Array(await sub.decrypt({name:'AES-CBC',iv},k,catU8(data,extra)))}
+async function decryptOffice(u8,pw){
+  const st=readCfb(u8),ei=st.EncryptionInfo,pkg=st.EncryptedPackage;if(!ei||!pkg)throw new Error('notenc');
+  if(!(rdU16(ei,0)===4&&rdU16(ei,2)===4))throw new Error('Bu dosyadaki eski tip şifreleme desteklenmiyor. Excel\'de parolayı kaldırıp kaydedin.');
+  const xml=new TextDecoder().decode(ei.subarray(8));const at=tag=>{const m=xml.match(new RegExp('<'+tag+'\\b([^>]*)>'));const o={};if(m)m[1].replace(/(\w+)="([^"]*)"/g,(_,k,v)=>{o[k]=v});return o};
+  const kd=at('keyData'),ek=at('p:encryptedKey');const alg=HNAME[ek.hashAlgorithm]||'SHA-512',kAlg=HNAME[kd.hashAlgorithm]||alg;
+  const dig=async(a,...p)=>new Uint8Array(await crypto.subtle.digest(a,catU8(...p)));
+  const salt=b64u8(ek.saltValue),spin=+ek.spinCount,kl=(+ek.keyBits||256)/8,pwb=new Uint8Array(pw.length*2);for(let i=0;i<pw.length;i++){pwb[i*2]=pw.charCodeAt(i)&255;pwb[i*2+1]=pw.charCodeAt(i)>>8}
+  let h=await dig(alg,salt,pwb);for(let i=0;i<spin;i++)h=await dig(alg,le32(i),h);
+  const fit=(b,n)=>{if(b.length>=n)return b.subarray(0,n);const o=new Uint8Array(n).fill(0x36);o.set(b);return o};
+  const kOf=async blk=>fit(await dig(alg,h,blk),kl);const hex=s=>Uint8Array.from(s.match(/../g),x=>parseInt(x,16));
+  const vin=(await aesRaw(await kOf(hex('fea7d2763b4b9e79')),salt,b64u8(ek.encryptedVerifierHashInput))).subarray(0,+ek.saltSize||16);
+  const vh=await aesRaw(await kOf(hex('d7aa0f6d3061344e')),salt,b64u8(ek.encryptedVerifierHashValue));const vin2=await dig(alg,vin);
+  for(let i=0;i<vin2.length;i++)if(vin2[i]!==vh[i])return null;
+  const key=(await aesRaw(await kOf(hex('146e0be7abacd0d6')),salt,b64u8(ek.encryptedKeyValue))).subarray(0,(+kd.keyBits||256)/8);
+  const ksalt=b64u8(kd.saltValue),bs=+kd.blockSize||16,size=rdU32(pkg,0),data=pkg.subarray(8),parts=[];
+  for(let i=0,n=0;i<data.length;i+=4096,n++){const iv=fit(await dig(kAlg,ksalt,le32(n)),bs);const seg=data.subarray(i,Math.min(i+4096,data.length));parts.push(await aesRaw(key,iv,seg.subarray(0,seg.length-seg.length%16)))}
+  return catU8(...parts).subarray(0,size)}
+
 /* ================= EXCEL'DEN AL (tek tıkla tarama) ================= */
 const KIND={earn:'Günlük kazanç (Genel)',kk:'Kredi kartı',avans:'Avans',iade:'İade',son:'Aylık özet (Son sayfası)',skip:'Aktarma'};
 const IMP={file:'',sheets:null,R:[],months:{},newOn:{},result:null,undo:null,busy:false};
@@ -786,10 +832,14 @@ async function impLoadFile(f){if(!f)return;
   if(/\.xls$/i.test(f.name)){alert('Bu eski tip bir Excel dosyası (.xls). Excel\'de açıp Dosya → Farklı Kaydet → "Excel Çalışma Kitabı (*.xlsx)" olarak kaydedin, sonra o dosyayı bırakın.');return}
   let buf;try{buf=await f.arrayBuffer()}catch(e){alert('Dosya açılamadı. Büyük ihtimalle dosya şu an Excel\'de açık.\n\nExcel\'i kapatıp tekrar deneyin.');return}
   const sig=new Uint8Array(buf.slice(0,4)),isZip=sig[0]===0x50&&sig[1]===0x4B,isOle=sig[0]===0xD0&&sig[1]===0xCF,isCsv=/\.(csv|txt)$/i.test(f.name);
-  if(!isCsv&&isOle){alert('Bu dosyanın içi eski tip Excel (.xls) ya da dosya şifreli.\n\nExcel\'de açıp Dosya → Farklı Kaydet → Kayıt türü: "Excel Çalışma Kitabı (*.xlsx)" seçerek yeni bir isimle kaydedin (şifre varsa önce kaldırın).');return}
+  if(!isCsv&&isOle){let enc=false;try{enc=!!readCfb(new Uint8Array(buf)).EncryptionInfo}catch(e){}
+    if(enc){IMP.pw={name:f.name,u8:new Uint8Array(buf),err:''};IMP.sheets=null;IMP.result=null;renderImport();setTimeout(()=>{const i=$('impPw');if(i)i.focus()},50);return}
+    alert('Bu dosyanın içi eski tip Excel (.xls).\n\nExcel\'de açıp Dosya → Farklı Kaydet → Kayıt türü: "Excel Çalışma Kitabı (*.xlsx)" seçerek kaydedin, sonra yeni dosyayı bırakın.');return}
   if(!isCsv&&!isZip){alert('Bu dosya Excel (.xlsx) olarak okunamadı. Excel\'de Farklı Kaydet → "Excel Çalışma Kitabı (*.xlsx)" ile kaydedip tekrar deneyin.');return}
+  await impProcess(f.name,buf,isCsv)}
+async function impProcess(name,buf,isCsv){
   try{IMP.sheets=isCsv?readCsv(buf):await readXlsx(buf)}catch(e){alert('Dosya okunamadı.\n\nTeknik ayrıntı: '+e.message+'\n\nBu mesajın fotoğrafını gönderirseniz sebebini bulabiliriz.');return}
-  IMP.file=f.name;IMP.result=null;IMP.newOn={};
+  IMP.file=name;IMP.result=null;IMP.newOn={};IMP.pw=null;
   IMP.R=IMP.sheets.map((sh,si)=>({si,name:sh.name,kind:guessKind(sh.name,sh.rows),manual:false}));IMP.R.forEach(analyze);
   IMP.months={};allMonthsFound().forEach(m=>IMP.months[m]=true);Object.keys(newNames()).forEach(k=>IMP.newOn[k]=true);
   renderImport();toast('Dosya tarandı')}
@@ -823,6 +873,10 @@ function renderImport(){
       <div class="big">Excel dosyasını buraya sürükleyin</div><div class="muted">ya da tıklayıp seçin (.xlsx veya .csv)</div>${IMP.file?`<div style="margin-top:8px">Yüklü: <b>${esc(IMP.file)}</b></div>`:''}</label>
     <p class="muted small">Panel dosyadaki bütün sayfaları tarar: Genel → günlük kazançlar, kredi kartı / avans / iade sayfaları → kendi bölümleri, Son sayfası → teknisyen, fatura, banka, sigorta, implant. Aynı dosyayı tekrar yüklerseniz kayıtlar ikinci kez eklenmez, güncellenir.</p>
     ${IMP.undo?'<button class="b s d" data-act="impUndo">Son aktarımı geri al</button>':''}</div>`;
+  if(IMP.pw)h+=`<div class="card"><h2>Bu Excel dosyası parolayla korunuyor</h2>
+    <p>${esc(IMP.pw.name)} dosyasını açmak için Excel'de açarken yazdığınız parolayı girin. Parola sadece bu bilgisayarda dosyayı açmak için kullanılır; hiçbir yere gönderilmez, kaydedilmez.</p>
+    <div class="row"><label class="f">Excel parolası<input id="impPw" type="password" autocomplete="off" data-enter="impPw"></label><button class="b p" data-act="impPw" ${IMP.pw.busy?'disabled':''}>${IMP.pw.busy?'Açılıyor… (birkaç saniye)':'Dosyayı aç'}</button><button class="b" data-act="impPwCancel">Vazgeç</button></div>
+    ${IMP.pw.err?`<p class="neg">${esc(IMP.pw.err)}</p>`:''}</div>`;
   if(IMP.sheets){const ms=allMonthsFound(),nn=newNames();
     h+=`<div class="card"><h2>Bulunanlar</h2>
       <div class="row" style="margin-bottom:10px"><span class="muted">Aylar:</span>${ms.map(m=>`<label class="c chip"><input type="checkbox" data-imonth="${m}" ${IMP.months[m]?'checked':''}> ${monthName(m)}</label>`).join('')||'<span class="muted">tarihli veri bulunamadı</span>'}</div>
@@ -899,6 +953,13 @@ ACT.impUndo=async()=>{const u=IMP.undo;if(!u||!confirm('Son aktarım geri alıns
   try{for(const[m,d]of Object.entries(u.before)){if(d)await store.setMonth(m,d);else await store.deleteMonth(m)}
     if(u.newDocs.length){const p={};u.newDocs.forEach(id=>p[id]=DEL);await store.patchSettings({doctors:p})}
     IMP.undo=null;IMP.result=null;renderImport();toast('Son aktarım geri alındı',1)}catch(e){alert(errMsg(e))}};
+
+ACT.impPw=async()=>{const P=IMP.pw;if(!P||P.busy)return;const pw=$('impPw').value;if(!pw){P.err='Parolayı yazın.';renderImport();return}
+  P.busy=true;P.err='';renderImport();let out=null;
+  try{out=await decryptOffice(P.u8,pw)}catch(e){P.busy=false;P.err=e.message==='notenc'?'Dosya açılamadı.':e.message;renderImport();return}
+  P.busy=false;if(!out){P.err='Parola yanlış. Excel\'de bu dosyayı açarken yazdığınız parolayı deneyin.';renderImport();setTimeout(()=>{const i=$('impPw');if(i)i.focus()},50);return}
+  await impProcess(P.name,out.buffer.slice(out.byteOffset,out.byteOffset+out.byteLength),false)};
+ACT.impPwCancel=()=>{IMP.pw=null;renderImport()};
 
 /* ================= GİRİŞ / BAŞLATMA ================= */
 function show(id){['login','gate','app'].forEach(x=>{$(x).hidden=x!==id})}

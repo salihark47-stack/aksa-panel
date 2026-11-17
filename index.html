@@ -183,7 +183,8 @@ function readCsv(buf){let t=new TextDecoder('utf-8').decode(buf);if(t.includes('
   const rows=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}else if(ch==='"')q=true;else if(ch===dl){row.push(f);f=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}else f+=ch}
   if(f||row.length){row.push(f);rows.push(row)}
   return[{name:'CSV',rows:rows.map(r=>r.map(v=>{const s=v.trim();return/^-?[\d.]+(,\d+)?$|^-?\d+(\.\d+)?$/.test(s)&&s!==''?parseNum(s):s}))}]}
-function cellDate(v){
+function cellDate(v){const r=cellDate0(v);if(!r)return null;const y=+r.slice(0,4);return y>=2000&&y<=2100?r:null}
+function cellDate0(v){
   if(typeof v==='number')return null;
   const s=String(v||'').trim().toLocaleLowerCase('tr');if(!s)return null;let m;
   if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)))return m[1]+'-'+pad(m[2])+'-'+pad(m[3]);
@@ -311,11 +312,11 @@ function docHasData(m,id){return!!docGenel(m,id)||['kk','avans','iade','lab'].so
 function monthDoctors(m){return S.doctors.filter(d=>d.pay!==false&&(d.active!==false||docHasData(m,d.id)))}
 function calcDoc(m,d){
   const r=mget(m,d.id);const by=t=>sum(entries(t,m).filter(e=>e.docId===d.id).map(e=>e.amount));
-  const genel=docGenel(m,d.id),iade=by('iade'),s1=genel-iade,tek=by('lab'),s2=s1-tek,rate=+d.rate||0,yuzde=s2*rate/100,avans=by('avans'),s3=yuzde-avans;
+  const genel=docGenel(m,d.id),iade=by('iade'),s1=genel-iade,tek=by('lab'),s2=s1-tek,rate=r.rate!=null?+r.rate:(+d.rate||0),yuzde=s2*rate/100,avans=by('avans'),s3=yuzde-avans;
   const kk=by('kk'),fatura=d.fatura?(+r.fatura||0):0,kkNet=Math.max(0,kk-fatura);
-  const kkRate=d.kkOn?((d.kkRate!==''&&d.kkRate!=null)?+d.kkRate:+S.settings.kkRate):0,kkKes=kkNet*kkRate/100,s4=s3-kkKes;
+  const kkRate=r.kkRate!=null?+r.kkRate:(d.kkOn?((d.kkRate!==''&&d.kkRate!=null)?+d.kkRate:+S.settings.kkRate):0),kkKes=kkNet*kkRate/100,s4=s3-kkKes;
   const banka=(r.banka!=null)?+r.banka:(+d.banka||0),s5=s4-banka,sigorta=(r.sigorta!=null)?+r.sigorta:(+d.sigorta||0),s6=s5-sigorta;
-  const impAdet=d.implant?(+r.implant||0):0,impTutar=impAdet*(+d.implantUnit||0),diger=+r.diger||0,net=s6+impTutar+diger;
+  const impAdet=(d.implant||r.unit!=null)?(+r.implant||0):0,impTutar=impAdet*(r.unit!=null?+r.unit:(+d.implantUnit||0)),diger=+r.diger||0,net=s6+impTutar+diger;
   return{genel,iade,s1,tek,s2,rate,yuzde,avans,s3,kk,fatura,kkNet,kkRate,kkKes,s4,banka,s5,sigorta,s6,impAdet,impTutar,diger,net}}
 function calcTechs(m){
   const lab=entries('lab',m),av=entries('avans',m);
@@ -484,12 +485,12 @@ const CF=['genel','iade','s1','tek','s2','yuzde','avans','s3','kk','kkNet','kkKe
 function renderAylik(){
   const m=U.month,docs=monthDoctors(m);
   const rows=docs.map(d=>{const c=calcDoc(m,d),r=mget(m,d.id);
-    const inp=(f,val,ph,on=true)=>on?`<td class="in"><input inputmode="decimal" data-mon="${d.id}" data-field="${f}" value="${val!=null&&val!==''&&+val!==0?fmt(val):''}" placeholder="${ph}"></td>`:'<td class="muted">—</td>';
+    const inp=(f,val,ph,on=true)=>on?`<td class="in"><input inputmode="decimal" data-mon="${d.id}" data-field="${f}" value="${val!=null&&val!==''&&+val!==0?fmt(val):''}" placeholder="${ph}" ${f==='diger'&&r.digerNote?`title="${esc(r.digerNote)}" style="background:#fff8e6"`:''}></td>`:'<td class="muted">—</td>';
     const cell=(f,cls='')=>`<td id="c-${d.id}-${f}" class="${cls}">${fmtc(c[f])}</td>`;
-    return`<tr><td class="l"><b>${esc(d.name)}</b>${d.active===false?' <span class="muted small">(ayrıldı)</span>':''}</td>${cell('genel')}${cell('iade')}${cell('s1')}${cell('tek')}${cell('s2')}<td>%${fmt(c.rate)}</td>${cell('yuzde')}${cell('avans')}${cell('s3')}${cell('kk')}
+    return`<tr><td class="l"><b>${esc(d.name)}</b>${d.active===false?' <span class="muted small">(ayrıldı)</span>':''}</td>${cell('genel')}${cell('iade')}${cell('s1')}${cell('tek')}${cell('s2')}<td title="${r.rate!=null?'Bu ay için Excel\'den gelen oran':''}">%${fmt(c.rate)}${r.rate!=null&&+r.rate!==+d.rate?'*':''}</td>${cell('yuzde')}${cell('avans')}${cell('s3')}${cell('kk')}
     ${inp('fatura',r.fatura,'0',!!d.fatura)}${cell('kkNet')}<td id="c-${d.id}-kkKes" title="Oran: %${fmt(c.kkRate)}">${d.kkOn?fmtc(c.kkKes):'<span class="muted">yok</span>'}</td>${cell('s4')}
     ${inp('banka',r.banka,fmt(+d.banka||0))}${cell('s5')}${inp('sigorta',r.sigorta,fmt(+d.sigorta||0))}${cell('s6')}
-    ${inp('implant',r.implant,'0',!!d.implant)}${cell('impTutar')}${inp('diger',r.diger,'0')}${cell('net','netc')}</tr>`}).join('');
+    ${inp('implant',r.implant,'0',!!d.implant||r.unit!=null)}${cell('impTutar')}${inp('diger',r.diger,'0')}${cell('net','netc')}</tr>`}).join('');
   main.innerHTML=`<div class="printhead"><h2>${esc(S.settings.clinicName||'')} — ${monthName(m)} Aylık Hesap</h2></div>
   <div class="card"><div class="row between"><h2 style="margin:0">Doktor ödemeleri</h2>${monthBar()}
     <div class="row noprint"><button class="b s" data-act="xlsMonth">Ayı Excel'e aktar</button><button class="b s" data-act="print">Yazdır / PDF</button><button class="b s p" data-act="mailMonth">Ay sonu raporunu e-postayla gönder</button></div></div>
@@ -540,6 +541,7 @@ function renderYonetim(){
   main.innerHTML=`
   <div class="card"><h2>Doktorlar ve başlıklar</h2>
     <p class="muted small">Hakediş: işaretli değilse (ör. İmplant, Pan) Genel sayfasında sütun olarak görünür ama ödeme hesaplanmaz. KK oranı boşsa genel oran (%${fmt(s.kkRate)}) kullanılır. Değişiklikler kutudan çıkınca kaydedilir.</p>
+    ${(()=>{const j=S.doctors.filter(d=>typeof specialCol==='function'&&specialCol(d.name)!==null);return j.length?`<div class="hint">Excel aktarımında yanlışlıkla başlık olarak eklenmiş görünenler: <b>${j.map(d=>esc(d.name)).join(', ')}</b>. Bunlar doktor değil, Excel'in toplam/harcama/KK sütunları. <button class="b s p" data-act="cleanJunk">Bunları ve kayıtlarını temizle</button></div>`:''})()}
     ${S.doctors.length?'':`<div class="hint">Liste boş. Aşağıdan tek tek ekleyebilir ya da Excel'den aktarırken isimleri otomatik ekletebilirsiniz.</div>`}
     <div class="scroll"><table><thead><tr><th class="l">Ad</th><th>Hakediş</th><th>Yüzde %</th><th>KK kesintisi</th><th>KK oranı %</th><th>Fatura</th><th>İmplant primi</th><th>Birim ücret</th><th>Vars. banka</th><th>Vars. sigorta</th><th></th></tr></thead><tbody>
     ${act.map(d=>`<tr><td class="l in"><input class="w" data-doc="${d.id}" data-df="name" value="${esc(d.name)}"></td>
@@ -613,7 +615,7 @@ function renderYonetim(){
   store.allMonths().then(all=>{const sel=$('delMonth');if(sel)sel.innerHTML='<option value="">— ay seçin —</option>'+Object.keys(all).sort().reverse().map(m=>`<option value="${m}">${monthName(m)}</option>`).join('')}).catch(()=>{})}
 function leftList(kind){const arr=(kind==='doctors'?S.doctors:S.technicians).filter(x=>x.active===false);if(!arr.length)return'';
   return`<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">İşten ayrılanlar (${arr.length})</summary><p class="muted small">Giriş listelerinde görünmezler; kayıtları durur ve çalıştıkları ayların raporlarında yer alırlar.</p>
-  <table style="max-width:600px"><tbody>${arr.map(x=>`<tr><td class="l"><b>${esc(x.name)}</b></td><td class="l muted">${x.leftDate?'Ayrılış: '+trDate(x.leftDate):''}</td><td><button class="b s" data-act="comeBack" data-kind="${kind}" data-id="${x.id}">Geri al</button></td></tr>`).join('')}</tbody></table></details>`}
+  <table style="max-width:600px"><tbody>${arr.map(x=>`<tr><td class="l"><b>${esc(x.name)}</b></td><td class="l muted">${x.leftDate?'Ayrılış: '+trDate(x.leftDate):''}</td><td><button class="b s" data-act="comeBack" data-kind="${kind}" data-id="${x.id}">Geri al</button> <button class="b s d" data-act="purge" data-kind="${kind}" data-id="${x.id}">Tamamen sil</button></td></tr>`).join('')}</tbody></table></details>`}
 CHANGE.push(t=>{
   if(U.tab!=='yonetim')return;
   if(t.dataset.doc){const id=t.dataset.doc,f=t.dataset.df;let v;
@@ -720,6 +722,19 @@ async function autoTasks(){if(autoBusy||!isAdmin())return;const s=S.settings;if(
   try{const t=todayStr();if(s.autoDaily&&s.lastDailyBackup!==t){await patchSettings({lastDailyBackup:t});await sendBackupMail('Günlük otomatik yedek')}
     const prev=shiftMonth(ym(t),-1);if(s.autoMonthly&&(s.lastMonthlyReport||'')<prev){const d=await store.getMonth(prev);if(d){await patchSettings({lastMonthlyReport:prev});S.months[prev]=S.months[prev]||d;await sendMonthReport(prev)}}}catch(e){console.error(e)}finally{autoBusy=false}}
 
+ACT.purge=async a=>{const kind=a.dataset.kind,id=a.dataset.id,list=kind==='doctors'?S.doctors:S.technicians,x=list.find(y=>y.id===id);if(!x)return;
+  try{const all=await store.allMonths();const used=kind==='doctors'?Object.values(all).some(m=>Object.values(m.days||{}).some(d=>d&&d.e&&+d.e[id])||['kk','avans','iade','lab'].some(t=>Object.values(m[t]||{}).some(e=>e&&e.docId===id))||!!(m.monthly||{})[id]):Object.values(all).some(m=>['avans','lab'].some(t=>Object.values(m[t]||{}).some(e=>e&&e.techId===id)));
+    if(used){alert(x.name+' için kayıtlar var, bu yüzden tamamen silinemez. Listede "ayrıldı" olarak kalabilir.\n\nKayıtlar Excel aktarımından geldiyse önce Excel\'den Al → "Önceki aktarımlar"dan o aktarımı silin.');return}
+    if(!confirm(x.name+' tamamen silinsin mi?'))return;patchSettings({[kind]:{[id]:DEL}});toast(x.name+' silindi')}catch(e){alert(errMsg(e))}};
+
+ACT.cleanJunk=async()=>{const j=S.doctors.filter(d=>specialCol(d.name)!==null);if(!j.length)return;
+  if(!confirm(j.map(d=>d.name).join(', ')+' listeden ve bütün aylardaki kayıtlarından silinecek. Devam?'))return;
+  try{toast('Temizleniyor…',1);const all=await store.allMonths();const ids=j.map(d=>d.id);
+    for(const[m,d]of Object.entries(all)){const p={};Object.entries(d.days||{}).forEach(([dt,x])=>{ids.forEach(id=>{if(x&&x.e&&id in x.e){p.days=p.days||{};p.days[dt]=p.days[dt]||{e:{}};p.days[dt].e[id]=DEL}})});
+      ['kk','avans','iade','lab'].forEach(t=>Object.entries(d[t]||{}).forEach(([eid,e])=>{if(e&&ids.includes(e.docId)){p[t]=p[t]||{};p[t][eid]=DEL}}));ids.forEach(id=>{if((d.monthly||{})[id]){p.monthly=p.monthly||{};p.monthly[id]=DEL}});
+      if(Object.keys(p).length)await store.patchMonth(m,p)}
+    const del={};ids.forEach(id=>del[id]=DEL);await store.patchSettings({doctors:del});toast('Temizlendi',1)}catch(e){alert(errMsg(e))}};
+
 /* ===== PAROLALI EXCEL (Office şifreleme) ===== */
 const rdU32=(a,o)=>new DataView(a.buffer,a.byteOffset,a.byteLength).getUint32(o,true);
 const rdU16=(a,o)=>new DataView(a.buffer,a.byteOffset,a.byteLength).getUint16(o,true);
@@ -768,7 +783,7 @@ async function decryptOffice(u8,pw){
 
 /* ================= EXCEL'DEN AL (tek tıkla tarama) ================= */
 const KIND={earn:'Günlük kazanç (Genel)',kk:'Kredi kartı',avans:'Avans',iade:'İade',son:'Aylık özet (Son sayfası)',skip:'Aktarma'};
-const IMP={file:'',sheets:null,R:[],months:{},newOn:{},result:null,undo:null,busy:false};
+const IMP={align:true,file:'',sheets:null,R:[],months:{},newOn:{},result:null,undo:null,busy:false};
 const TOTALISH=/^(toplam|genel|sonuc|sonuç|net|tarih|gün|gun|ay|total)$/;
 function matchPerson(txt,techs){const n=normName(txt);if(n.length<2)return'';
   const pool=[...S.doctors.map(d=>['d:'+d.id,normName(d.name)]),...(techs?S.technicians.map(t=>['t:'+t.id,normName(t.name)]):[])];
@@ -789,44 +804,57 @@ function monthFromLabel(v){
   return null}
 function findSonHeaders(rows){const out=[];rows.slice(0,5000).forEach((r,ri)=>{const n=r.map(normName);if(n.includes('genel')&&(n.includes('teknisyen')||n.includes('yuzde')||n.includes('yüzde'))&&n.some(x=>x==='kk'||x==='avans'))out.push(ri)});return out}
 // --- sayfa çözümleme ---
-function analyze(R){const sh=IMP.sheets[R.si];const rows=sh.rows.slice(0,6000);R.err='';
+function isHeadRow(r,dc){if(cellDate(r[dc]))return false;return r.filter((v,i)=>i!==dc&&typeof v==='string'&&v.trim()&&!cellDate(v)&&!/^\s*[\d.,]+\s*$/.test(v)).length>=3}
+function specialCol(v){const n=normName(v);if(/^(harc|gider|masraf)/.test(n))return'x:exp';if(/^(kk|kredikart|pos)/.test(n))return'x:kk';if(/^(kalan|k|nk|net|nakit|toplam|tolam|top|devir|gunluktoplam|genel|tarih)$/.test(n)||/^(netkalan|toplam)/.test(n))return'';return null}
+function analyze(R){const sh=IMP.sheets[R.si];const rows=sh.rows.slice(0,20000);R.err='';
   if(R.kind==='skip'){R.layout='';return}
   if(R.kind==='son'){R.layout='son';parseSon(R,rows);return}
-  const techs=R.kind==='avans';const maxC=Math.max(1,...rows.map(r=>r.length));
+  const techs=R.kind==='avans';const maxC=Math.max(1,...rows.slice(0,3000).map(r=>r.length));
   if(!R.manual){
     const sc=Array(maxC).fill(0);rows.forEach(r=>r.forEach((v,i)=>{if(cellDate(v))sc[i]++}));const dc=sc.indexOf(Math.max(...sc));R.dateCol=dc;
-    let best=-1,bs=0;rows.forEach((r,ri)=>{const k=r.filter((v,i)=>i!==dc&&typeof v==='string'&&!cellDate(v)&&matchPerson(v,true)).length;if(k>bs){bs=k;best=ri}});
+    const heads=[];rows.forEach((r,ri)=>{if(isHeadRow(r,dc))heads.push(ri)});
     const hr0=rows.findIndex(r=>r.filter(v=>typeof v==='string'&&v.trim()&&!cellDate(v)).length>=2);
     const hrow=hr0>=0?rows[hr0].map(normName):[];const kw=re=>hrow.findIndex(v=>re.test(v));
     const lc={date:kw(/tarih|^gun|^gün|date/),who:kw(/kisi|kişi|doktor|hekim|^ad$|isim|kime|personel/),amount:kw(/tutar|miktar|^tl$|ucret|ücret|fiyat/),note:kw(/aciklama|açıklama|^not$/)};
-    if(bs>=2||(bs>=1&&lc.who<0)){R.layout='grid';R.head=best}
-    else if(lc.who>=0&&lc.amount>=0){R.layout='list';R.head=hr0;R.lc={...lc,date:lc.date>=0?lc.date:dc}}
-    else if(sc[dc]>0&&hr0>=0){R.layout='grid';R.head=hr0}
+    if(lc.who>=0&&lc.amount>=0&&heads.length<=1){R.layout='list';R.head=hr0;R.lc={...lc,date:lc.date>=0?lc.date:dc}}
+    else if(sc[dc]>0&&heads.length){R.layout='grid';R.heads=heads}
     else{R.layout='';R.err='Bu sayfanın düzeni tanınamadı.';return}
-    R.map={};R.nameMap={}}
-  if(R.layout==='grid'){const hr=rows[R.head]||[];
-    hr.forEach((v,i)=>{if(i===R.dateCol||v===''||v==null||typeof v!=='string')return;if(R.map[i]!==undefined)return;
-      const w=matchPerson(v,techs);if(w&&(techs||w.startsWith('d:'))){R.map[i]=w;return}
-      const has=rows.some((r,ri)=>ri!==R.head&&cellDate(r[R.dateCol])&&impNum(r[i]));R.map[i]=has&&!TOTALISH.test(normName(v))&&normName(v).length>=2?'new':''})}
+    R.nm={};R.label={};R.nameMap={}}
+  if(R.layout==='grid'){(R.heads||[]).forEach(hi=>{rows[hi].forEach((v,i)=>{if(i===R.dateCol||typeof v!=='string'||!v.trim())return;const k=normName(v);if(!k||k in R.nm)return;R.label[k]=v.trim();
+      if(R.kind==='earn'){const sp=specialCol(v);if(sp!==null){R.nm[k]=sp;return}}else if(specialCol(v)===''){R.nm[k]='';return}
+      const w=matchPerson(v,techs);R.nm[k]=w&&(techs||w.startsWith('d:'))?w:'new'})})}
   else if(R.layout==='list'){rows.slice(R.head+1).forEach(r=>{const w=String(r[R.lc.who]??'').trim();if(!w||!cellDate(r[R.lc.date])||w in R.nameMap)return;const m=matchPerson(w,techs);R.nameMap[w]=m&&(techs||m.startsWith('d:'))?m:'new'})}}
 function parseSon(R,rows){R.blocks=[];const hs=findSonHeaders(rows);
   hs.forEach(h=>{const hr=rows[h].map(normName);let m=null;for(const v of rows[h]){m=monthFromLabel(v);if(m)break}if(!m&&h>0)for(const v of rows[h-1]){m=monthFromLabel(v);if(m)break}
     const ix=re=>hr.findIndex(v=>re.test(v));
-    const col={genel:ix(/^genel$/),iade:ix(/^iade$/),tek:ix(/^teknisyen$/),avans:ix(/^avans$/),kk:ix(/^kk$/),fatura:ix(/^fatura$/),banka:ix(/^banka$/),sigorta:ix(/^sigorta$/),adet:ix(/adet|imp/)};
+    const col={yuzde:ix(/^y[üu]zde$/),kk5:ix(/^kk%?5$|^kk5$/),genel:ix(/^genel$/),iade:ix(/^iade$/),tek:ix(/^teknisyen$/),avans:ix(/^avans$/),kk:ix(/^kk$/),fatura:ix(/^fatura$/),banka:ix(/^banka$/),sigorta:ix(/^sigorta$/),adet:ix(/adet|imp/)};
+    const sonucCols=hr.map((v,i)=>/^sonu[cç]$/.test(v)?i:-1).filter(i=>i>=0);let unit=null;rows[h].forEach(v=>{if(typeof v==='string'&&/\*\s*\d{3,5}/.test(v))unit=+v.match(/(\d{3,5})/)[1]});
     const nameCol=0;const out=[];
     for(let r=h+1;r<rows.length;r++){const row=rows[r];const nm=String(row[nameCol]??'').trim();if(!nm||findSonHeaders([row]).length)break;
+      if(TOTALISH.test(normName(nm))||/^toplam/.test(normName(nm))||!row.some(v=>typeof v==='number'))continue;
       const w=matchPerson(nm,false);const nums=row.filter(v=>typeof v==='number');const g=k=>col[k]>=0?impNum(row[col[k]]):0;
-      out.push({name:nm,docId:w&&w.startsWith('d:')?w.slice(2):null,genel:g('genel'),iade:g('iade'),tek:g('tek'),avans:g('avans'),kk:g('kk'),fatura:g('fatura'),banka:g('banka'),sigorta:g('sigorta'),adet:g('adet'),bankaSet:col.banka>=0&&row[col.banka]!=='',sigSet:col.sigorta>=0&&row[col.sigorta]!=='',expected:nums.length?nums[nums.length-1]:null})}
-    if(m&&out.length)R.blocks.push({month:m,rows:out})});
+      const s2=g('genel')-g('iade')-g('tek'),yz=g('yuzde');
+      let expected=null;for(let q=sonucCols.length-1;q>=0;q--){const v=row[sonucCols[q]];if(typeof v==='number'){expected=v;break}}
+      const kkBase=g('kk')-g('fatura');const kkRate=kkBase>0?(col.kk5>=0&&typeof row[col.kk5]==='number'?Math.round(row[col.kk5]/kkBase*10000)/100:0):0;
+      out.push({rate:s2>0&&yz?Math.round(yz/s2*1000)/10:null,kkCut:g('kk5')>0,kkRate,unit,name:nm,docId:w&&w.startsWith('d:')?w.slice(2):null,genel:g('genel'),iade:g('iade'),tek:g('tek'),avans:g('avans'),kk:g('kk'),fatura:g('fatura'),banka:g('banka'),sigorta:g('sigorta'),adet:g('adet'),bankaSet:col.banka>=0&&row[col.banka]!=='',sigSet:col.sigorta>=0&&row[col.sigorta]!=='',expected:expected??(nums.length?nums[nums.length-1]:null)})}
+    if(m&&out.length&&out.some(r=>r.genel))R.blocks.push({month:m,rows:out})});
   if(!R.blocks.length)R.err='Aylık özet tablosu bulunamadı.'}
 function itemsOf(R){const sh=IMP.sheets[R.si],rows=sh.rows,items=[];
-  if(R.layout==='grid')rows.forEach((r,ri)=>{if(ri===R.head)return;const d=cellDate(r[R.dateCol]);if(!d)return;
-    Object.keys(R.map).forEach(c=>{const w=R.map[c];if(!w)return;const a=impNum(r[c]);if(!a)return;items.push({date:d,who:w==='new'?'new:'+String(rows[R.head][c]).trim():w,amount:a})})});
+  if(R.layout==='grid'){const hs=new Set(R.heads||[]);let h=(R.heads&&R.heads.length)?rows[R.heads[0]]:[];
+    rows.forEach((r,ri)=>{if(hs.has(ri)){h=r;return}const d=cellDate(r[R.dateCol]);if(!d)return;
+      r.forEach((v,c)=>{if(c===R.dateCol)return;const t=h[c];if(typeof t!=='string'||!t.trim())return;const k=normName(t),w=R.nm[k];if(!w)return;const a=impNum(v);if(!a)return;items.push({date:d,who:w==='new'?'new:'+R.label[k]:w,amount:a})})})}
   else if(R.layout==='list')rows.slice(R.head+1).forEach(r=>{const d=cellDate(r[R.lc.date]);if(!d)return;const nm=String(r[R.lc.who]??'').trim(),w=R.nameMap[nm];if(!w)return;const a=impNum(r[R.lc.amount]);if(!a)return;
     items.push({date:d,who:w==='new'?'new:'+nm:w,amount:a,note:R.lc.note>=0?String(r[R.lc.note]??''):''})});
   return items}
+function defaultMonths(){IMP.months={};const ms=allMonthsFound(),now=ym(todayStr());const sb=IMP.R.filter(R=>R.kind==='son'&&!R.err).flatMap(R=>R.blocks||[]).map(b=>b.month).sort();
+  const from=sb.length?sb[0]:shiftMonth(now,-11);ms.forEach(m=>{IMP.months[m]=m>=from&&m<=now})}
 function allMonthsFound(){const s=new Set();IMP.R.forEach(R=>{if(R.kind==='son')(R.blocks||[]).forEach(b=>s.add(b.month));else if(R.kind!=='skip')itemsOf(R).forEach(i=>s.add(ym(i.date)))});return[...s].sort()}
-function newNames(){const s={};IMP.R.forEach(R=>{if(R.kind==='skip'||R.kind==='son')return;itemsOf(R).forEach(i=>{if(i.who.startsWith('new:')){const n=i.who.slice(4);s[normName(n)]=s[normName(n)]||n}})});return s}
+function sonBlocks(){const bl=IMP.R.filter(R=>R.kind==='son'&&!R.err).flatMap(R=>R.blocks||[]).filter(b=>IMP.months[b.month]);const last={};bl.forEach((b,i)=>{last[b.month]=i});return bl.filter((b,i)=>last[b.month]===i)}
+function newNames(){const s={};IMP.R.forEach(R=>{if(R.kind==='skip'||R.kind==='son'||R.err)return;itemsOf(R).forEach(i=>{if(i.who.startsWith('new:')&&IMP.months[ym(i.date)]){const n=i.who.slice(4);s[normName(n)]=s[normName(n)]||{name:n,doctor:false}}})});
+  const allB=IMP.R.filter(R=>R.kind==='son'&&!R.err).flatMap(R=>R.blocks||[]),latest=allB.reduce((a,b)=>b.month>a?b.month:a,'');
+  sonBlocks().forEach(b=>b.rows.forEach(r=>{if(r.docId)return;const k=normName(r.name);let o=s[k];if(!o||!o.doctor)o=s[k]={name:o?o.name:r.name,doctor:true,first:b.month,last:b.month,fatura:false,implant:false,kkOn:false};
+    if(b.month>=o.last){o.last=b.month;if(r.rate!=null)o.rate=r.rate}if(b.month<o.first)o.first=b.month;if(o.rate==null&&r.rate!=null)o.rate=r.rate;if(r.fatura)o.fatura=true;if(r.adet)o.implant=true;if(r.kkCut)o.kkOn=true}));
+  Object.values(s).forEach(o=>{if(o.doctor)o.active=o.last===latest});return s}
 // --- dosya ---
 async function impLoadFile(f){if(!f)return;
   if(/\.xls$/i.test(f.name)){alert('Bu eski tip bir Excel dosyası (.xls). Excel\'de açıp Dosya → Farklı Kaydet → "Excel Çalışma Kitabı (*.xlsx)" olarak kaydedin, sonra o dosyayı bırakın.');return}
@@ -841,51 +869,62 @@ async function impProcess(name,buf,isCsv){
   try{IMP.sheets=isCsv?readCsv(buf):await readXlsx(buf)}catch(e){alert('Dosya okunamadı.\n\nTeknik ayrıntı: '+e.message+'\n\nBu mesajın fotoğrafını gönderirseniz sebebini bulabiliriz.');return}
   IMP.file=name;IMP.result=null;IMP.newOn={};IMP.pw=null;
   IMP.R=IMP.sheets.map((sh,si)=>({si,name:sh.name,kind:guessKind(sh.name,sh.rows),manual:false}));IMP.R.forEach(analyze);
-  IMP.months={};allMonthsFound().forEach(m=>IMP.months[m]=true);Object.keys(newNames()).forEach(k=>IMP.newOn[k]=true);
+  defaultMonths();Object.keys(newNames()).forEach(k=>IMP.newOn[k]=true);
   renderImport();toast('Dosya tarandı')}
 main.addEventListener('dragover',e=>{if(U.tab==='imp'){e.preventDefault();const z=$('dropZone');if(z)z.classList.add('over')}});
 main.addEventListener('dragleave',e=>{const z=$('dropZone');if(z&&!z.contains(e.relatedTarget))z.classList.remove('over')});
 main.addEventListener('drop',e=>{if(U.tab!=='imp')return;e.preventDefault();const z=$('dropZone');if(z)z.classList.remove('over');impLoadFile(e.dataTransfer.files[0])});
 // --- ekran ---
-function personOpts(cur,label,techs){return`<option value="">— Aktarma —</option>${S.doctors.map(d=>`<option value="d:${d.id}" ${cur==='d:'+d.id?'selected':''}>${esc(d.name)}${d.active===false?' (ayrıldı)':''}</option>`).join('')}
+function personOpts(cur,label,techs,earn){return`<option value="">— Aktarma —</option>${earn?`<option value="x:exp" ${cur==='x:exp'?'selected':''}>→ Günün harcaması</option><option value="x:kk" ${cur==='x:kk'?'selected':''}>→ Günün kredi kartı toplamı</option>`:''}${S.doctors.map(d=>`<option value="d:${d.id}" ${cur==='d:'+d.id?'selected':''}>${esc(d.name)}${d.active===false?' (ayrıldı)':''}</option>`).join('')}
   ${techs?S.technicians.map(t=>`<option value="t:${t.id}" ${cur==='t:'+t.id?'selected':''}>${esc(t.name)} (teknisyen)</option>`).join(''):''}${label?`<option value="new" ${cur==='new'?'selected':''}>+ Yeni olarak ekle: ${esc(label)}</option>`:''}`}
 function sheetSummary(R){
   if(R.kind==='skip')return'<span class="muted">Aktarılmayacak</span>';
   if(R.err)return`<span class="neg">${esc(R.err)}</span> <span class="muted">— "Düzelt"ten ayarlayabilir ya da türünü "Aktarma" yapabilirsiniz.</span>`;
-  if(R.kind==='son'){const bl=(R.blocks||[]).filter(b=>IMP.months[b.month]);const un=[...new Set(bl.flatMap(b=>b.rows.filter(r=>!r.docId).map(r=>r.name)))];
-    return`${bl.map(b=>monthName(b.month)).join(', ')||'Seçili ayda tablo yok'} · ${sum(bl.map(b=>b.rows.filter(r=>r.docId).length))} doktor satırı${un.length?` · <span class="neg">tanınmayan: ${esc(un.join(', '))}</span>`:''}<br><span class="muted small">Buradan teknisyen, fatura, banka, sigorta ve implant adedi alınır; hesap sonuçları Excel'le karşılaştırılır.</span>`}
-  const it=itemsOf(R).filter(i=>IMP.months[ym(i.date)]);const ppl=new Set(it.map(i=>i.who));
-  return`${it.length} kayıt · ${ppl.size} kişi · toplam ${fmt(sum(it.map(i=>i.amount)))} ₺ <span class="muted small">(${R.layout==='grid'?'tablo düzeni':'liste düzeni'})</span>`}
+  if(R.kind==='son'){const all=(R.blocks||[]).map(b=>b.month),dup=[...new Set(all.filter((m,i)=>all.indexOf(m)!==i))];const bl=sonBlocks();
+    const dupNote=dup.length?`<br><span class="small" style="color:#9a6700">${dup.map(monthName).join(', ')} bu sayfada iki kez var; alttaki tablo kullanılacak.</span>`:'';const un=[...new Set(bl.flatMap(b=>b.rows.filter(r=>!r.docId).map(r=>r.name)))];
+    return`${bl.map(b=>monthName(b.month)).join(', ')||'Seçili ayda tablo yok'} · ${sum(bl.map(b=>b.rows.filter(r=>r.docId).length))} doktor satırı${un.length?` · <span style="color:#9a6700">yeni doktor: ${esc(un.join(', '))}</span>`:''}${dupNote}<br><span class="muted small">Buradan teknisyen, fatura, banka, sigorta ve implant adedi alınır; hesap sonuçları Excel'le karşılaştırılır.</span>`}
+  const it=itemsOf(R).filter(i=>IMP.months[ym(i.date)]);const ppl=new Set(it.map(i=>i.who).filter(w=>!w.startsWith('x:')));const fut=[...new Set(itemsOf(R).map(i=>ym(i.date)).filter(m=>m>ym(todayStr())))];
+  return`${it.length} kayıt · ${ppl.size} kişi${R.kind==='earn'?' (+ günlük harcama ve KK)':''} <span class="muted small">(${R.layout==='grid'?'tablo düzeni':'liste düzeni'})</span>${fut.length?`<br><span class="small" style="color:#9a6700">⚠ ${fut.map(monthName).join(', ')} tarihli kayıtlar var; bu ay(lar) henüz gelmedi. Excel'de tarihler yanlış yazılmış olabilir.</span>`:''}`}
 function mappingEditor(R){const sh=IMP.sheets[R.si],techs=R.kind==='avans';
   if(R.kind==='son'||R.kind==='skip')return'';
   const maxC=Math.max(1,...sh.rows.slice(0,3000).map(r=>r.length));
   const colOpt=(cur,none)=>(none?`<option value="-1" ${cur<0?'selected':''}>— yok —</option>`:'')+Array.from({length:maxC},(_,i)=>{const hv=(sh.rows[R.head]||[])[i];return`<option value="${i}" ${cur===i?'selected':''}>${colL(i)}${hv!==''&&hv!=null?' — '+esc(String(hv).slice(0,18)):''}</option>`}).join('');
   let h=`<div class="row" style="margin:8px 0"><label class="f">Düzen<select data-ir="${R.si}" data-ik="layout"><option value="grid" ${R.layout==='grid'?'selected':''}>Tablo (satır: tarih, sütun: kişi)</option><option value="list" ${R.layout==='list'?'selected':''}>Liste (her satır bir kayıt)</option></select></label>
-    <label class="f">Başlık satırı<input class="num" style="width:80px" data-ir="${R.si}" data-ik="head" value="${(R.head||0)+1}"></label>`;
-  if(R.layout==='grid'){h+=`<label class="f">Tarih sütunu<select data-ir="${R.si}" data-ik="dateCol">${colOpt(R.dateCol)}</select></label></div>`;
-    const hr=sh.rows[R.head]||[];h+=`<table style="max-width:640px"><thead><tr><th class="l">Sütun</th><th class="l">Dosyadaki başlık</th><th class="l">Paneldeki kişi</th></tr></thead><tbody>${Object.keys(R.map).map(Number).sort((a,b)=>a-b).map(c=>`<tr><td class="l">${colL(c)}</td><td class="l"><b>${esc(hr[c])}</b></td><td class="l"><select data-ir="${R.si}" data-ik="map" data-c="${c}">${personOpts(R.map[c],String(hr[c]).trim(),techs)}</select></td></tr>`).join('')}</tbody></table>`}
+    ${R.layout==='list'?`<label class="f">Başlık satırı<input class="num" style="width:80px" data-ir="${R.si}" data-ik="head" value="${(R.head||0)+1}"></label>`:''}`;
+  if(R.layout==='grid'){h+=`<label class="f">Tarih sütunu<select data-ir="${R.si}" data-ik="dateCol">${colOpt(R.dateCol)}</select></label></div>
+    <p class="muted small">Excel'de sütunlar aylar içinde yer değiştirdiği için her ay kendi başlık satırına göre okunur. Aşağıda dosyadaki bütün başlıklar var.</p>`;
+    h+=`<div class="scroll" style="max-height:50vh"><table style="max-width:640px"><thead><tr><th class="l">Dosyadaki başlık</th><th class="l">Paneldeki karşılığı</th></tr></thead><tbody>${Object.keys(R.nm).sort((a,b)=>trSort(R.label[a],R.label[b])).map(k=>`<tr><td class="l"><b>${esc(R.label[k])}</b></td><td class="l"><select data-ir="${R.si}" data-ik="nm" data-c="${esc(k)}">${personOpts(R.nm[k],R.label[k],techs,R.kind==='earn')}</select></td></tr>`).join('')}</tbody></table></div>`}
   else{const lc=R.lc||{date:-1,who:-1,amount:-1,note:-1};h+=['date','who','amount','note'].map(k=>`<label class="f">${({date:'Tarih',who:'Kişi',amount:'Tutar',note:'Açıklama'})[k]} sütunu<select data-ir="${R.si}" data-ik="lc" data-c="${k}">${colOpt(lc[k],1)}</select></label>`).join('')+'</div>';
     h+=`<table style="max-width:560px"><tbody>${Object.keys(R.nameMap||{}).sort(trSort).map(n=>`<tr><td class="l"><b>${esc(n)}</b></td><td class="l"><select data-ir="${R.si}" data-ik="name" data-c="${esc(n)}">${personOpts(R.nameMap[n],n,techs)}</select></td></tr>`).join('')}</tbody></table>`}
   return h}
+function monthPicker(ms){if(!ms.length)return'<p class="muted">Tarihli veri bulunamadı.</p>';const now=ym(todayStr());const years=[...new Set(ms.map(m=>m.slice(0,4)))];const sel=ms.filter(m=>IMP.months[m]).length;
+  return`<div style="margin-bottom:10px"><div class="row" style="align-items:center;margin-bottom:6px"><b>Aktarılacak aylar</b><span class="muted small">${sel} / ${ms.length} ay seçili</span><button class="b s" data-act="impAll">Tümü</button><button class="b s" data-act="impNone">Hiçbiri</button><button class="b s" data-act="impDef">Önerilen</button></div>
+  ${years.map(y=>{const yms=ms.filter(m=>m.startsWith(y));const all=yms.every(m=>IMP.months[m]);return`<div class="row" style="align-items:center;gap:6px;margin:3px 0"><label class="c" style="min-width:70px"><input type="checkbox" data-iyear="${y}" ${all?'checked':''}> <b>${y}</b></label>${yms.map(m=>`<label class="c chip small"><input type="checkbox" data-imonth="${m}" ${IMP.months[m]?'checked':''}> ${MONTHS[+m.slice(5)-1].slice(0,3)}${m>now?' ⚠':''}</label>`).join('')}</div>`}).join('')}
+  <p class="muted small">Önerilen: Son sayfasının başladığı aydan bu aya kadar. ⚠ işaretli aylar henüz gelmedi; Excel'de tarih yanlış yazılmış olabilir.</p></div>`}
 function renderImport(){
   let h=`<div class="card"><h2>Excel'den veri al</h2>
     <label id="dropZone" class="drop"><input type="file" id="impFile" accept=".xlsx,.xlsm,.csv,.xls" style="display:none">
       <div class="big">Excel dosyasını buraya sürükleyin</div><div class="muted">ya da tıklayıp seçin (.xlsx veya .csv)</div>${IMP.file?`<div style="margin-top:8px">Yüklü: <b>${esc(IMP.file)}</b></div>`:''}</label>
     <p class="muted small">Panel dosyadaki bütün sayfaları tarar: Genel → günlük kazançlar, kredi kartı / avans / iade sayfaları → kendi bölümleri, Son sayfası → teknisyen, fatura, banka, sigorta, implant. Aynı dosyayı tekrar yüklerseniz kayıtlar ikinci kez eklenmez, güncellenir.</p>
     ${IMP.undo?'<button class="b s d" data-act="impUndo">Son aktarımı geri al</button>':''}</div>`;
+  const log=Object.entries(S.settings.importLog||{}).filter(([k,v])=>v&&v.at).sort((a,b)=>b[1].at-a[1].at);
+  if(log.length)h+=`<div class="card"><h2>Önceki aktarımlar</h2><table><thead><tr><th class="l">Tarih</th><th class="l">Dosya</th><th class="l">Aylar</th><th class="l">Yapan</th><th></th></tr></thead><tbody>
+    ${log.map(([id,v])=>`<tr><td class="l">${new Date(v.at).toLocaleString('tr-TR')}</td><td class="l">${esc(v.file||'')}</td><td class="l wrap small">${(v.months||[]).length} ay (${(v.months||[]).slice(0,1).map(monthName)}${(v.months||[]).length>1?' – '+monthName(v.months[v.months.length-1]):''})</td><td class="l">${esc(v.by||'')}</td><td><button class="b s d" data-act="impDel" data-id="${id}">Bu aktarımı sil</button></td></tr>`).join('')}</tbody></table>
+    <p class="muted small">Silince o aktarımla gelen kayıtlar kaldırılır; elle girilen kayıtlar kalır. Aktarımla eklenen isimler başka yerde kullanılmıyorsa onlar da silinir.</p></div>`;
   if(IMP.pw)h+=`<div class="card"><h2>Bu Excel dosyası parolayla korunuyor</h2>
     <p>${esc(IMP.pw.name)} dosyasını açmak için Excel'de açarken yazdığınız parolayı girin. Parola sadece bu bilgisayarda dosyayı açmak için kullanılır; hiçbir yere gönderilmez, kaydedilmez.</p>
     <div class="row"><label class="f">Excel parolası<input id="impPw" type="password" autocomplete="off" data-enter="impPw"></label><button class="b p" data-act="impPw" ${IMP.pw.busy?'disabled':''}>${IMP.pw.busy?'Açılıyor… (birkaç saniye)':'Dosyayı aç'}</button><button class="b" data-act="impPwCancel">Vazgeç</button></div>
     ${IMP.pw.err?`<p class="neg">${esc(IMP.pw.err)}</p>`:''}</div>`;
   if(IMP.sheets){const ms=allMonthsFound(),nn=newNames();
     h+=`<div class="card"><h2>Bulunanlar</h2>
-      <div class="row" style="margin-bottom:10px"><span class="muted">Aylar:</span>${ms.map(m=>`<label class="c chip"><input type="checkbox" data-imonth="${m}" ${IMP.months[m]?'checked':''}> ${monthName(m)}</label>`).join('')||'<span class="muted">tarihli veri bulunamadı</span>'}</div>
+      ${monthPicker(ms)}
       <table><thead><tr><th class="l">Excel sayfası</th><th class="l">Nereye</th><th class="l">Özet</th><th></th></tr></thead><tbody>
       ${IMP.R.map(R=>`<tr><td class="l"><b>${esc(R.name)}</b></td><td class="l"><select data-ir="${R.si}" data-ik="kind">${Object.keys(KIND).map(k=>`<option value="${k}" ${R.kind===k?'selected':''}>${KIND[k]}</option>`).join('')}</select></td><td class="l wrap">${sheetSummary(R)}</td>
         <td>${R.kind!=='skip'&&R.kind!=='son'?`<button class="b s" data-act="impEdit" data-si="${R.si}">${IMP.open===R.si?'Kapat':'Düzelt'}</button>`:''}</td></tr>
         ${IMP.open===R.si?`<tr><td colspan="4" class="l" style="background:#f8fafb">${mappingEditor(R)}</td></tr>`:''}`).join('')}</tbody></table>
-      ${Object.keys(nn).length?`<h3>Panelde olmayan isimler</h3><p class="muted small">İşaretli olanlar panele yeni başlık olarak eklenir (hakediş kapalı; doktorsa Yönetim'den açıp oranını yazın). İşareti kaldırırsanız o isim aktarılmaz.</p>
-        <div class="row">${Object.keys(nn).map(k=>`<label class="c chip"><input type="checkbox" data-inew="${k}" ${IMP.newOn[k]!==false?'checked':''}> ${esc(nn[k])}</label>`).join('')}</div>`:''}
+      ${Object.keys(nn).length?`<h3>Panelde olmayan isimler</h3><p class="muted small">İşaretli olanlar panele eklenir. Son sayfasında hesabı olanlar <b>doktor</b> olarak Excel'deki oranlarıyla eklenir; artık çalışmayanlar "ayrıldı" olarak işaretlenir. Diğerleri (eski başlıklar) hakediş hesaplanmayan, pasif başlık olur. İşareti kaldırırsanız o isim aktarılmaz.</p>
+        <div class="row">${Object.keys(nn).map(k=>{const o=nn[k];return`<label class="c chip"><input type="checkbox" data-inew="${k}" ${IMP.newOn[k]!==false?'checked':''}> ${esc(o.name)}${o.doctor?` <span class="muted small">doktor${o.rate!=null?' %'+fmt(o.rate):''} · ${monthName(o.first)}–${monthName(o.last)}${o.active?'':' · ayrıldı'}</span>`:''}</label>`}).join('')}</div>`:''}
+      ${IMP.R.some(R=>R.kind==='son'&&!R.err)?`<label class="c" style="margin-top:10px"><input type="checkbox" data-ialign="1" ${IMP.align?'checked':''}> Geçmiş aylarda Excel'deki ödeme sonucunu esas al — Excel'in kendi içindeki tutarsızlıklardan doğan farkı o doktorun "Diğer" alanına "Excel farkı" notuyla yaz (bu ay hariç)</label>`:''}
       <div class="row" style="margin-top:14px"><button class="b p big" data-act="impApply" ${IMP.busy?'disabled':''}>${IMP.busy?'Aktarılıyor…':'Seçili ayları içeri al'}</button>
       <span class="muted small">Aktarmadan önce etkilenen ayların kopyası alınır; beğenmezseniz "Son aktarımı geri al".</span></div></div>`}
   if(IMP.result)h+=IMP.result;
@@ -893,16 +932,18 @@ function renderImport(){
 CHANGE.push(t=>{
   if(U.tab!=='imp')return;
   if(t.id==='impFile'){impLoadFile(t.files[0]);t.value='';return}
-  if(t.dataset.imonth){IMP.months[t.dataset.imonth]=t.checked;return renderImport()}
+  if(t.dataset.imonth){IMP.months[t.dataset.imonth]=t.checked;keepNew();return renderImport()}
+  if(t.dataset.iyear){allMonthsFound().filter(m=>m.startsWith(t.dataset.iyear)).forEach(m=>IMP.months[m]=t.checked);keepNew();return renderImport()}
   if(t.dataset.inew){IMP.newOn[t.dataset.inew]=t.checked;return}
+  if(t.dataset.ialign){IMP.align=t.checked;return}
   if(t.dataset.ir===undefined)return;const R=IMP.R[+t.dataset.ir],k=t.dataset.ik;
   if(k==='kind'){R.kind=t.value;R.manual=false;analyze(R);Object.keys(newNames()).forEach(x=>{if(IMP.newOn[x]===undefined)IMP.newOn[x]=true});allMonthsFound().forEach(m=>{if(IMP.months[m]===undefined)IMP.months[m]=true})}
   else{R.manual=true;
-    if(k==='layout'){R.layout=t.value;R.map={};R.nameMap={};if(R.layout==='list'&&!R.lc)R.lc={date:R.dateCol||0,who:-1,amount:-1,note:-1}}
-    else if(k==='head'){R.head=Math.max(0,(parseInt(t.value)||1)-1);R.map={};R.nameMap={}}
-    else if(k==='dateCol'){R.dateCol=+t.value;R.map={}}
+    if(k==='layout'){R.layout=t.value;R.nm={};R.label={};R.nameMap={};if(R.layout==='grid'){const rows=IMP.sheets[R.si].rows;R.heads=[];rows.forEach((r,ri)=>{if(isHeadRow(r,R.dateCol||0))R.heads.push(ri)})}if(R.layout==='list'&&!R.lc)R.lc={date:R.dateCol||0,who:-1,amount:-1,note:-1}}
+    else if(k==='head'){R.head=Math.max(0,(parseInt(t.value)||1)-1);R.nameMap={}}
+    else if(k==='dateCol'){R.dateCol=+t.value;const rows=IMP.sheets[R.si].rows;R.heads=[];rows.forEach((r,ri)=>{if(isHeadRow(r,R.dateCol))R.heads.push(ri)});R.nm={};R.label={}}
     else if(k==='lc'){R.lc[t.dataset.c]=+t.value;R.nameMap={}}
-    else if(k==='map'){R.map[t.dataset.c]=t.value;return renderImport()}
+    else if(k==='nm'){R.nm[t.dataset.c]=t.value;return renderImport()}
     else if(k==='name'){R.nameMap[t.dataset.c]=t.value;return renderImport()}
     analyze(R)}
   renderImport()});
@@ -912,42 +953,56 @@ async function impApply(){
   const sel=Object.keys(IMP.months).filter(m=>IMP.months[m]);if(!sel.length){toast('En az bir ay seçin');return}
   // 1) yeni isimler
   const nn=newNames(),created={},newDocs={};let ord=maxOrder(S.doctors);
-  Object.keys(nn).forEach(k=>{if(IMP.newOn[k]===false)return;const ex=S.doctors.find(d=>normName(d.name)===k);if(ex){created[k]=ex.id;return}const id=uid();created[k]=id;newDocs[id]={name:nn[k],pay:false,rate:0,kkOn:false,kkRate:'',fatura:false,implant:false,implantUnit:0,banka:0,sigorta:0,active:true,order:ord++}});
-  const res=w=>{if(w.startsWith('new:')){const id=created[normName(w.slice(4))];return id?{docId:id}:null}return w.startsWith('t:')?{techId:w.slice(2)}:{docId:w.slice(2)}};
+  Object.keys(nn).forEach(k=>{if(IMP.newOn[k]===false)return;const o=nn[k];const ex=S.doctors.find(d=>normName(d.name)===k);if(ex){created[k]=ex.id;return}const id=uid();created[k]=id;
+    newDocs[id]=o.doctor?{name:o.name,pay:true,rate:o.rate??0,kkOn:o.kkOn,kkRate:'',fatura:o.fatura,implant:o.implant,implantUnit:o.implant?4500:0,banka:0,sigorta:0,active:!!o.active,...(o.active?{}:{leftDate:lastDay(o.last)}),order:ord++}
+      :{name:o.name,pay:false,rate:0,kkOn:false,kkRate:'',fatura:false,implant:false,implantUnit:0,banka:0,sigorta:0,active:false,order:ord++}});
+  const impId='i'+Date.now().toString(36);const K={},Km=m=>K[m]=K[m]||{e:[],x:[],kk:[],led:{kk:[],avans:[],iade:[],lab:[]},monthly:[]};
+  const res=w=>{if(w==='x:exp')return{special:'exp'};if(w==='x:kk')return{special:'kk'};if(w.startsWith('new:')){const id=created[normName(w.slice(4))];return id?{docId:id}:null}return w.startsWith('t:')?{techId:w.slice(2)}:{docId:w.slice(2)}};
   // 2) yamalar
   const P={},Pm=m=>P[m]=P[m]||{};const got={};const mark=(m,k)=>{(got[m]=got[m]||{})[k]=true};
   IMP.R.forEach(R=>{if(R.kind==='skip'||R.kind==='son'||R.err)return;const occ={};
     itemsOf(R).forEach(it=>{const m=ym(it.date);if(!IMP.months[m])return;const r=res(it.who);if(!r)return;
-      if(R.kind==='earn'){if(!r.docId)return;const p=Pm(m);p.days=p.days||{};const d=p.days[it.date]=p.days[it.date]||{e:{}};d.e[r.docId]=(d.e[r.docId]||0)+it.amount;mark(m,'earn')}
+      if(R.kind==='earn'){const p=Pm(m);p.days=p.days||{};const d=p.days[it.date]=p.days[it.date]||{e:{}};
+        if(r.special==='exp'){d.x=d.x||{};const prev=d.x.imp_exp?d.x.imp_exp.a:0;d.x.imp_exp={d:'Excel\'den aktarılan günlük harcama',a:prev+it.amount,by:S.uid,bn:S.name||S.email,at:Date.now()};Km(m).x.push(it.date)}
+        else if(r.special==='kk'){d.kk=(d.kk||0)+it.amount;Km(m).kk.push(it.date)}
+        else{if(!r.docId)return;d.e[r.docId]=(d.e[r.docId]||0)+it.amount;Km(m).e.push([it.date,r.docId])}mark(m,'earn')}
       else{const key=[R.kind,it.date,r.docId||r.techId,it.amount].join('|');occ[key]=(occ[key]||0)+1;const id='x'+hash(key+'|'+occ[key]);
-        const p=Pm(m);p[R.kind]=p[R.kind]||{};p[R.kind][id]={date:it.date,docId:r.docId||null,techId:r.techId||null,title:'',amount:it.amount,note:it.note||'Excel\'den aktarıldı',by:S.uid,bn:S.name||S.email,at:Date.now()};mark(m,R.kind)}})});
-  const sons=IMP.R.filter(R=>R.kind==='son'&&!R.err).flatMap(R=>R.blocks||[]).filter(b=>IMP.months[b.month]);
+        Km(m).led[R.kind].push(id);const p=Pm(m);p[R.kind]=p[R.kind]||{};p[R.kind][id]={date:it.date,docId:r.docId||null,techId:r.techId||null,title:'',amount:it.amount,note:it.note||'Excel\'den aktarıldı',by:S.uid,bn:S.name||S.email,at:Date.now()};mark(m,R.kind)}})});
+  const sons=sonBlocks().map(b=>({...b,rows:b.rows.map(r=>({...r,docId:r.docId||created[normName(r.name)]||null}))}));
   const before={};const touched=new Set([...Object.keys(P),...sons.map(b=>b.month)]);
   for(const m of touched)before[m]=await store.getMonth(m);
   sons.forEach(b=>{const m=b.month,ld=lastDay(m),p=Pm(m),cur=before[m]||{};const has=k=>(got[m]||{})[k]||(k==='earn'?Object.values(cur.days||{}).some(dayHas):Object.keys(cur[k]||{}).length>0);
-    b.rows.forEach(r=>{if(!r.docId)return;const d=docById(r.docId)||{};p.monthly=p.monthly||{};const mo=p.monthly[r.docId]={};
-      if(r.bankaSet)mo.banka=r.banka;if(r.sigSet)mo.sigorta=r.sigorta;if(r.fatura)mo.fatura=r.fatura;if(r.adet)mo.implant=r.adet;
-      p.lab=p.lab||{};const lid='son_lab_'+r.docId;if(r.tek)p.lab[lid]={date:ld,docId:r.docId,techId:null,title:'',amount:r.tek,note:'Excel Son sayfası teknisyen toplamı',by:S.uid,bn:S.name||S.email,at:Date.now()};else if((cur.lab||{})[lid])p.lab[lid]=DEL;
-      ['kk','avans','iade'].forEach(k=>{if(has(k)&&!(cur[k]||{})['son_'+k+'_'+r.docId])return;const id='son_'+k+'_'+r.docId;p[k]=p[k]||{};p[k][id]=r[k]?{date:ld,docId:r.docId,techId:null,title:'',amount:r[k],note:'Excel Son sayfası ay toplamı',by:S.uid,bn:S.name||S.email,at:Date.now()}:DEL});
-      if(!has('earn')&&r.genel){p.days=p.days||{};const dd=p.days[ld]=p.days[ld]||{e:{}};dd.e=dd.e||{};dd.e[r.docId]=r.genel}})});
+    b.rows.forEach(r=>{if(!r.docId)return;p.monthly=p.monthly||{};const mo=p.monthly[r.docId]={};Km(m).monthly.push(r.docId);
+      if(r.bankaSet)mo.banka=r.banka;if(r.sigSet)mo.sigorta=r.sigorta;if(r.fatura)mo.fatura=r.fatura;if(r.adet){mo.implant=r.adet;if(r.unit)mo.unit=r.unit}
+      if(r.rate!=null)mo.rate=r.rate;if(r.kkRate!=null)mo.kkRate=r.kkRate;
+      p.lab=p.lab||{};const lid='son_lab_'+r.docId;Km(m).led.lab.push(lid);if(r.tek)p.lab[lid]={date:ld,docId:r.docId,techId:null,title:'',amount:r.tek,note:'Excel Son sayfası teknisyen toplamı',by:S.uid,bn:S.name||S.email,at:Date.now()};else if((cur.lab||{})[lid])p.lab[lid]=DEL;
+      ['kk','avans','iade'].forEach(k=>{if(has(k)&&!(cur[k]||{})['son_'+k+'_'+r.docId])return;const id='son_'+k+'_'+r.docId;Km(m).led[k].push(id);p[k]=p[k]||{};p[k][id]=r[k]?{date:ld,docId:r.docId,techId:null,title:'',amount:r[k],note:'Excel Son sayfası ay toplamı',by:S.uid,bn:S.name||S.email,at:Date.now()}:DEL});
+      if(!has('earn')&&r.genel){p.days=p.days||{};const dd=p.days[ld]=p.days[ld]||{e:{}};dd.e=dd.e||{};dd.e[r.docId]=r.genel;Km(m).e.push([ld,r.docId])}})});
+  Object.keys(P).forEach(m=>{if(K[m])P[m].imp={[impId]:JSON.stringify(K[m])}});
   const ms=Object.keys(P);if(!ms.length&&!Object.keys(newDocs).length){toast('Aktarılacak veri bulunamadı');return}
   const nItems=sum(ms.map(m=>{const p=P[m];return sum(Object.values(p.days||{}).map(d=>Object.keys(d.e||{}).length))+['kk','avans','iade','lab'].reduce((a,k)=>a+Object.keys(p[k]||{}).length,0)}));
   if(!confirm(`${ms.map(monthName).join(', ')} için ${nItems} kayıt panele aktarılacak${Object.keys(newDocs).length?` ve ${Object.keys(newDocs).length} yeni isim eklenecek`:''}. Devam edilsin mi?`))return;
   IMP.busy=true;renderImport();
-  try{if(Object.keys(newDocs).length)await store.patchSettings({doctors:newDocs});
+  try{await store.patchSettings({...(Object.keys(newDocs).length?{doctors:newDocs}:{}),importLog:{[impId]:{at:Date.now(),file:IMP.file,months:ms,by:S.name||S.email,newDocs:Object.keys(newDocs)}}});
     for(const m of ms)await store.patchMonth(m,P[m]);
     IMP.undo={before,newDocs:Object.keys(newDocs)};
     // 3) doğrulama
     let html=`<div class="card"><h2>Aktarım tamamlandı</h2><p>${ms.map(monthName).join(', ')} — ${nItems} kayıt aktarıldı.</p>`;
-    if(sons.length){for(const b of sons){S.months[b.month]=await store.getMonth(b.month)||{};}
-      html+=sons.map(b=>{const rows=b.rows.filter(r=>r.docId&&r.expected!=null).map(r=>{const d=docById(r.docId);if(!d||d.pay===false)return null;const net=calcDoc(b.month,d).net;const ok=Math.abs(net-r.expected)<1;return[d.name,r.expected,net,ok]}).filter(Boolean);
+    if(sons.length){const now=ym(todayStr());let nAdj=0;
+      for(const b of sons){S.months[b.month]=await store.getMonth(b.month)||{};
+        if(IMP.align&&b.month<now){const adj={};b.rows.forEach(r=>{if(!r.docId||r.expected==null)return;const d=docById(r.docId)||(newDocs[r.docId]?{id:r.docId,...newDocs[r.docId]}:null);if(!d||d.pay===false)return;
+            const c=calcDoc(b.month,d),df=Math.round((r.expected-c.net)*100)/100;if(Math.abs(df)>=1){adj[r.docId]={diger:df+(+mget(b.month,r.docId).diger||0),digerNote:'Excel farkı'};nAdj++}});
+          if(Object.keys(adj).length){await store.patchMonth(b.month,{monthly:adj});S.months[b.month]=await store.getMonth(b.month)||{}}}}
+      html+=sons.map(b=>{const rows=b.rows.filter(r=>r.docId&&r.expected!=null).map(r=>{const d=docById(r.docId)||(newDocs[r.docId]?{id:r.docId,...newDocs[r.docId]}:null);if(!d||d.pay===false)return null;const c=calcDoc(b.month,d),net=c.net;const ok=Math.abs(net-r.expected)<1;
+          const note=mget(b.month,r.docId).digerNote==='Excel farkı'?`Excel farkı "Diğer"e yazıldı: ${fmt(mget(b.month,r.docId).diger)}`:'';
+          const why=ok?note:[['genel','Genel'],['iade','İade'],['tek','Teknisyen'],['avans','Avans'],['kk','KK']].filter(([k])=>Math.abs((c[k]||0)-(r[k]||0))>=1).map(([k,l])=>`${l}: Excel ${fmt(r[k]||0)}, panel ${fmt(c[k]||0)}`).join(' · ');return[d.name,r.expected,net,ok,why]}).filter(Boolean);
         const bad=rows.filter(r=>!r[3]).length;
         return`<h3>${monthName(b.month)}: Excel sonucu ile panel karşılaştırması ${bad?`<span class="neg">(${bad} doktorda fark var)</span>`:'<span class="ok-t">(hepsi tutuyor ✓)</span>'}</h3>
-        <table style="max-width:620px"><thead><tr><th class="l">Doktor</th><th>Excel (Son)</th><th>Panel</th><th>Durum</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="l">${esc(r[0])}</td><td>${fmt(r[1])}</td><td>${fmt(r[2])}</td><td>${r[3]?'<span class="ok-t">✓</span>':fmtc(r[2]-r[1])}</td></tr>`).join('')}</tbody></table>`}).join('')+
-        `<p class="muted small">Fark varsa çoğunlukla sebebi doktorun oranı, KK/fatura ayarı ya da kredi kartı/avans/iade sayfasının farklı okunmasıdır. Aylık Hesap sekmesinden kontrol edebilirsiniz.</p>`}
+        <table style="max-width:680px"><thead><tr><th class="l">Doktor</th><th>Excel (Son)</th><th>Panel</th><th>Durum</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="l">${esc(r[0])}</td><td>${fmt(r[1])}</td><td>${fmt(r[2])}</td><td>${r[3]?'<span class="ok-t">✓</span>':fmtc(r[2]-r[1])}</td></tr>${r[4]?`<tr><td colspan="4" class="l wrap small muted">↳ ${esc(r[4])}${!r[3]&&/Avans|KK|İade/.test(r[4])?' — panel ilgili sayfadaki kayıtları kullanıyor; Excel\'deki Son sayfası güncellenmemiş olabilir.':''}</td></tr>`:''}`).join('')}</tbody></table>`}).join('')+
+        `${nAdj?`<p class="small">Geçmiş aylarda ${nAdj} doktorda Excel ile panel arasındaki fark "Diğer" alanına "Excel farkı" olarak yazıldı; böylece o ayların ödemeleri Excel'dekiyle aynı. Farkların sebebi Excel'in kendi sayfaları arasındaki tutarsızlıklar (ör. Son sayfasındaki KK tutarının kredi kartı sayfasından farklı olması).</p>`:''}<p class="muted small">Bu ay için fark varsa, çoğunlukla Excel'deki Son sayfası henüz güncellenmediği içindir (ör. yeni girilen avanslar).</p>`}
     IMP.result=html+'</div>';IMP.sheets=null;IMP.file='';toast('Aktarım tamamlandı',1)}
   catch(e){alert('Aktarım yarıda kaldı: '+errMsg(e)+'\n\n"Son aktarımı geri al" ile başa dönebilirsiniz.');IMP.undo={before,newDocs:Object.keys(newDocs)}}
-  finally{IMP.busy=false;renderImport()}}
+  finally{IMP.busy=false;renderImport();setTimeout(()=>{if(U.tab==='imp')renderImport()},1000)}}
 ACT.impApply=()=>impApply();
 ACT.impUndo=async()=>{const u=IMP.undo;if(!u||!confirm('Son aktarım geri alınsın mı? Etkilenen aylar aktarımdan önceki haline döner (o aylara aktarımdan sonra girilen kayıtlar da geri gider).'))return;
   try{for(const[m,d]of Object.entries(u.before)){if(d)await store.setMonth(m,d);else await store.deleteMonth(m)}
@@ -960,6 +1015,24 @@ ACT.impPw=async()=>{const P=IMP.pw;if(!P||P.busy)return;const pw=$('impPw').valu
   P.busy=false;if(!out){P.err='Parola yanlış. Excel\'de bu dosyayı açarken yazdığınız parolayı deneyin.';renderImport();setTimeout(()=>{const i=$('impPw');if(i)i.focus()},50);return}
   await impProcess(P.name,out.buffer.slice(out.byteOffset,out.byteOffset+out.byteLength),false)};
 ACT.impPwCancel=()=>{IMP.pw=null;renderImport()};
+
+function keepNew(){Object.keys(newNames()).forEach(x=>{if(IMP.newOn[x]===undefined)IMP.newOn[x]=true})}
+ACT.impAll=()=>{allMonthsFound().forEach(m=>IMP.months[m]=true);keepNew();renderImport()};
+ACT.impNone=()=>{allMonthsFound().forEach(m=>IMP.months[m]=false);renderImport()};
+ACT.impDef=()=>{defaultMonths();keepNew();renderImport()};
+
+ACT.impDel=async a=>{const id=a.dataset.id,v=(S.settings.importLog||{})[id];if(!v)return;
+  if(prompt(`${new Date(v.at).toLocaleString('tr-TR')} tarihli aktarımla gelen kayıtlar silinecek (${(v.months||[]).length} ay).\n\nOnaylamak için büyük harflerle SİL yazın:`)!=='SİL')return;
+  toast('Siliniyor…',1);try{await safetyDownload();
+    for(const m of v.months||[]){const d=await store.getMonth(m);if(!d)continue;const raw=(d.imp||{})[id];if(!raw)continue;const k=JSON.parse(raw),p={imp:{[id]:DEL}};
+      const day=dt=>{p.days=p.days||{};return p.days[dt]=p.days[dt]||{}};
+      k.e.forEach(([dt,doc])=>{const x=day(dt);x.e=x.e||{};x.e[doc]=DEL});k.x.forEach(dt=>{day(dt).x={imp_exp:DEL}});k.kk.forEach(dt=>{day(dt).kk=DEL});
+      Object.entries(k.led).forEach(([t,ids])=>ids.forEach(i=>{p[t]=p[t]||{};p[t][i]=DEL}));k.monthly.forEach(doc=>{p.monthly=p.monthly||{};p.monthly[doc]=DEL});
+      await store.patchMonth(m,p)}
+    const nd=v.newDocs||[];const purge={};if(nd.length){const all=await store.allMonths();nd.forEach(doc=>{if(!docUsedIn(all,doc))purge[doc]=DEL})}
+    await store.patchSettings({importLog:{[id]:DEL},...(Object.keys(purge).length?{doctors:purge}:{})});
+    IMP.undo=null;IMP.result=null;toast('Aktarım silindi',1);setTimeout(()=>{if(U.tab==='imp')renderImport()},800)}catch(e){alert('Silme yarıda kaldı: '+errMsg(e))}};
+function docUsedIn(all,doc){return Object.values(all).some(m=>Object.values(m.days||{}).some(x=>x&&x.e&&+x.e[doc])||['kk','avans','iade','lab'].some(t=>Object.values(m[t]||{}).some(e=>e&&e.docId===doc))||!!(m.monthly||{})[doc])}
 
 /* ================= GİRİŞ / BAŞLATMA ================= */
 function show(id){['login','gate','app'].forEach(x=>{$(x).hidden=x!==id})}

@@ -17,7 +17,8 @@ header .sp{flex:1}header .st{font-size:12px;opacity:.8}
 header button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 10px;cursor:pointer;font:inherit;font-size:12px}
 #net{color:#ffd27a}
 .demo{background:#fff4d6;color:#7a4d00;padding:8px 18px;font-size:13px;border-bottom:1px solid #f0d58a}
-#nav{display:flex;gap:2px;padding:0 12px;background:#0f3d3e;overflow-x:auto;white-space:nowrap}
+#nav{display:flex;gap:2px;padding:0 12px;background:#0f3d3e;overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:40;scrollbar-width:none}
+#nav::-webkit-scrollbar{display:none}
 #nav button{background:transparent;border:0;color:#cfe3e3;padding:10px 13px;font-size:14px;cursor:pointer;border-radius:8px 8px 0 0;flex:none}
 #nav button:hover{color:#fff}#nav button.active{background:var(--bg);color:var(--ink);font-weight:600}
 main{padding:16px;max-width:1600px;margin:0 auto}
@@ -38,13 +39,49 @@ button.d{color:var(--red)}button.s{padding:4px 10px;font-size:12px}button.big{pa
 table{border-collapse:collapse;width:100%}
 th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 td.wrap{white-space:normal}
-th{font-size:12px;color:var(--muted);font-weight:600;background:#f8fafb;position:sticky;top:0;z-index:1}
+th{font-size:12px;color:var(--muted);font-weight:600;background:#f8fafb}
+.scroll th{position:sticky;top:0;z-index:1}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.grid2>*{min-width:0}
+.card{min-width:0}
+td.note{white-space:normal;min-width:120px;max-width:280px;word-break:break-word}
+.only-m,.only-mi{display:none}
+.sticky1 th:first-child,.sticky1 td:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:1px 0 0 var(--line)}
+.sticky1 th:first-child{background:#f8fafb;z-index:3}.sticky1 tr.tot td:first-child{background:#eef4f4}.sticky1 tr.sel td:first-child{background:#e5f2f1}
+table.exp td.l{white-space:normal;word-break:break-word}
 td.l,th.l{text-align:left}
 tr.tot td{font-weight:700;background:#eef4f4}
 tr.click{cursor:pointer}tr.click:hover td{background:#f6faf9}tr.sel td{background:#e5f2f1}
 .scroll{overflow:auto;max-height:72vh}
 .grid2{display:grid;grid-template-columns:minmax(320px,460px) 1fr;gap:16px;align-items:start}
 @media(max-width:950px){.grid2{grid-template-columns:1fr!important}main{padding:10px}}
+@media(max-width:700px){
+  body{font-size:15px}
+  input,select,textarea{font-size:16px}
+  header{padding:8px 12px;gap:6px}header h1{font-size:16px;flex:1 1 auto}header .st{font-size:11px}#who{order:3;flex-basis:100%}
+  #nav{padding:0 4px}#nav button{padding:12px 12px;font-size:14px}
+  main{padding:8px}
+  .card{padding:12px;border-radius:10px;margin-bottom:10px}
+  .card h2{font-size:15px}
+  .row{gap:8px}
+  .row>label.f{flex:1 1 100%}
+  .row>label.f input,.row>label.f select{width:100%}
+  .row>button.b.p{flex:1 1 100%;padding:12px}
+  input.num{width:100%}
+  td.in input{width:100%;min-width:95px}
+  td.in input.w{min-width:130px}
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpi .v{font-size:16px}
+  .kpi.net{grid-column:1 / -1}
+  .between{flex-direction:column;align-items:stretch}
+  .mbar{justify-content:space-between}.mbar b{min-width:0;flex:1}
+  .scroll{max-height:none}
+  th,td{padding:7px 6px}
+  .drop{padding:24px 10px}.drop .big{font-size:15px}
+  .toast{left:12px;right:12px;bottom:12px;text-align:center}
+  .only-m{display:block}.only-mi{display:inline}.hide-m{display:none!important}
+  .lcard{margin:12px auto;padding:20px}
+}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:14px}
 .kpi{background:#f8fafb;border:1px solid var(--line);border-radius:10px;padding:9px 10px}
 .kpi .k{font-size:12px;color:var(--muted)}.kpi .v{font-size:17px;font-weight:700;margin-top:2px}
@@ -341,6 +378,8 @@ function typing(){const f=document.activeElement;return!!f&&main.contains(f)&&/^
 
 /* ================= ARAYÜZ İSKELETİ ================= */
 const main=$('main');
+function wrapTables(root){root.querySelectorAll('table').forEach(t=>{if(t.closest('.scroll,.tw'))return;const w=document.createElement('div');w.className='tw';t.parentNode.insertBefore(w,t);w.appendChild(t)})}
+new MutationObserver(()=>wrapTables(main)).observe(main,{childList:true,subtree:true});
 const TABS=[['genel','Genel (Günlük)'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['lab','Teknisyen İşleri'],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['yonetim','Yönetim',1]];
 function buildNav(){$('nav').innerHTML=TABS.filter(t=>!t[2]||isAdmin()).map(([k,l])=>`<button data-tab="${k}">${l}</button>`).join('')}
 $('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;U.tab=b.dataset.tab;U.edit={};render();window.scrollTo(0,0)});
@@ -360,6 +399,7 @@ function render(){
   $('clinicName').textContent=S.settings.clinicName||'Klinik Hesap Paneli';
   $('who').textContent=(S.name||S.email)+' · '+(isAdmin()?'Yönetici':'Personel');
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===U.tab));
+  const ab=document.querySelector('#nav button.active');if(ab&&ab.scrollIntoView)try{ab.scrollIntoView({block:'nearest',inline:'center'})}catch(e){}
   PAGES[U.tab]()}
 function refresh(){
   if(!S.settingsLoaded)return;
@@ -392,7 +432,7 @@ function refreshGenel(){
   const n=$('dayNote');if(n&&n!==document.activeElement)n.value=day.n;
   const kkPage=sum(entries('kk',ym(U.date)).filter(e=>e.date===U.date).map(e=>e.amount));const h=$('kkHint');
   if(h)h.innerHTML=kkPage&&Math.abs(kkPage-day.kk)>0.01?`<button class="b s" data-act="kkFromPage">Kredi Kartı sayfasındaki toplamı al (${fmt(kkPage)})</button>`:'';
-  const el=$('expList');if(el){const xs=expList(day);el.innerHTML=xs.length?`<table><tbody>${xs.map(x=>`<tr><td class="l">${esc(x.d||'—')}${x.bn?` <span class="muted small">· ${esc(x.bn)}</span>`:''}</td><td>${fmt(x.a)} ₺</td><td style="width:1%"><button class="b s d" data-act="expDel" data-id="${x.id}">Sil</button></td></tr>`).join('')}<tr class="tot"><td class="l">Toplam harcama</td><td>${fmt(sum(xs.map(e=>e.a)))} ₺</td><td></td></tr></tbody></table>`:'<div class="muted small">Bu gün için harcama girilmedi.</div>'}
+  const el=$('expList');if(el){const xs=expList(day);el.innerHTML=xs.length?`<table class="exp"><tbody>${xs.map(x=>`<tr><td class="l">${esc(x.d||'—')}${x.bn?` <span class="muted small">· ${esc(x.bn)}</span>`:''}</td><td>${fmt(x.a)} ₺</td><td style="width:1%"><button class="b s d" data-act="expDel" data-id="${x.id}">Sil</button></td></tr>`).join('')}<tr class="tot"><td class="l">Toplam harcama</td><td>${fmt(sum(xs.map(e=>e.a)))} ₺</td><td></td></tr></tbody></table>`:'<div class="muted small">Bu gün için harcama girilmedi.</div>'}
   const c=dayCalc(U.date);const kp=$('dayKpis');if(kp)kp.innerHTML=[['Toplam',c.toplam],['Harcama',c.harcama],['Kalan',c.kalan],['Kredi kartı',c.kk]].map(([a,v])=>`<div class="kpi"><div class="k">${a}</div><div class="v">${fmtc(v)}</div></div>`).join('')+`<div class="kpi net"><div class="k">NET (nakit)</div><div class="v">${fmtc(c.net)}</div></div>`;
   renderMonthTable()}
 function renderMonthTable(){
@@ -401,10 +441,10 @@ function renderMonthTable(){
   const docs=S.doctors.filter(d=>days.some(k=>+((Mo(m).days[k].e||{})[d.id])));
   const T={toplam:0,harcama:0,kalan:0,kk:0,net:0},DT={};
   const rows=days.map(k=>{const x=getDay(k),c=dayCalc(k);Object.keys(T).forEach(f=>T[f]+=c[f]);docs.forEach(d=>DT[d.id]=(DT[d.id]||0)+(+x.e[d.id]||0));
-    return`<tr class="click ${k===U.date?'sel':''}" data-act="goDay" data-d="${k}"><td class="l">${trDate(k)}</td>${docs.map(d=>`<td>${x.e[d.id]?fmt(x.e[d.id]):''}</td>`).join('')}<td><b>${fmt(c.toplam)}</b></td><td title="${esc(expList(x).map(e=>(e.d||'—')+': '+fmt(e.a)).join('\n'))}">${fmt(c.harcama)}</td><td>${fmt(c.kalan)}</td><td>${fmt(c.kk)}</td><td class="netc">${fmtc(c.net)}</td><td class="l small muted">${esc(x.n)}</td></tr>`}).join('');
-  el.innerHTML=`<table><thead><tr><th class="l">Tarih</th>${docs.map(d=>`<th>${esc(d.name)}</th>`).join('')}<th>Toplam</th><th>Harcama</th><th>Kalan</th><th>Kredi kartı</th><th>Net</th><th class="l">Not</th></tr></thead><tbody>${rows}
+    return`<tr class="click ${k===U.date?'sel':''}" data-act="goDay" data-d="${k}"><td class="l">${trDate(k)}</td>${docs.map(d=>`<td>${x.e[d.id]?fmt(x.e[d.id]):''}</td>`).join('')}<td><b>${fmt(c.toplam)}</b></td><td title="${esc(expList(x).map(e=>(e.d||'—')+': '+fmt(e.a)).join('\n'))}">${fmt(c.harcama)}</td><td>${fmt(c.kalan)}</td><td>${fmt(c.kk)}</td><td class="netc">${fmtc(c.net)}</td><td class="l small muted note">${esc(x.n)}</td></tr>`}).join('');
+  el.innerHTML=`<table class="sticky1"><thead><tr><th class="l">Tarih</th>${docs.map(d=>`<th>${esc(d.name)}</th>`).join('')}<th>Toplam</th><th>Harcama</th><th>Kalan</th><th>Kredi kartı</th><th>Net</th><th class="l">Not</th></tr></thead><tbody>${rows}
   <tr class="tot"><td class="l">AY TOPLAMI</td>${docs.map(d=>`<td>${fmt(DT[d.id])}</td>`).join('')}<td>${fmt(T.toplam)}</td><td>${fmt(T.harcama)}</td><td>${fmt(T.kalan)}</td><td>${fmt(T.kk)}</td><td class="netc">${fmtc(T.net)}</td><td></td></tr></tbody></table>
-  <div class="muted small" style="margin-top:6px">Satıra tıklayınca o günü açar. Harcama hücresinin üzerine gelince kalemleri görürsünüz.</div>`}
+  <div class="muted small" style="margin-top:6px">Satıra tıklayınca o günü açar.<span class="hide-m"> Harcama hücresinin üzerine gelince kalemleri görürsünüz.</span><span class="only-mi">Tabloyu sağa kaydırarak tüm sütunları görebilirsiniz.</span></div>`}
 function setDate(d){U.date=d;U.month=ym(d);syncWatch();renderGenel()}
 ACT.dayPrev=()=>setDate(shiftDay(U.date,-1));
 ACT.dayNext=()=>setDate(shiftDay(U.date,1));
@@ -460,7 +500,7 @@ function refreshLedger(){
   const tot=sum(list.map(e=>e.amount));
   el.innerHTML=`<div class="grid2" style="grid-template-columns:1fr minmax(280px,400px)">
   <div class="card"><h2>${monthName(m)} kayıtları</h2><div class="scroll"><table><thead><tr><th class="l">Tarih</th>${type==='lab'?'<th class="l">Teknisyen</th><th class="l">Doktor</th>':'<th class="l">Kime</th>'}<th>Tutar</th><th class="l">Açıklama</th><th class="l">Giren</th><th></th></tr></thead><tbody>
-  ${list.map(e=>`<tr class="${ed&&ed.id===e.id?'sel':''}"><td class="l">${trDate(e.date)}</td>${type==='lab'?`<td class="l">${esc(techName(e.techId))}</td><td class="l">${esc(e.docId?docName(e.docId):'Klinik')}</td>`:`<td class="l">${esc(whoLabel(e))}</td>`}<td>${fmt(e.amount)}</td><td class="l">${esc(e.note||'')}</td><td class="l small muted">${esc(e.bn||'')}</td><td><button class="b s" data-act="ledEdit" data-id="${e.id}">Düzenle</button> <button class="b s d" data-act="ledDel" data-id="${e.id}">Sil</button></td></tr>`).join('')||`<tr><td class="l muted" colspan="7">Bu ay kayıt yok.</td></tr>`}
+  ${list.map(e=>`<tr class="${ed&&ed.id===e.id?'sel':''}"><td class="l">${trDate(e.date)}</td>${type==='lab'?`<td class="l">${esc(techName(e.techId))}</td><td class="l">${esc(e.docId?docName(e.docId):'Klinik')}</td>`:`<td class="l">${esc(whoLabel(e))}</td>`}<td>${fmt(e.amount)}</td><td class="l note">${esc(e.note||'')}</td><td class="l small muted">${esc(e.bn||'')}</td><td><button class="b s" data-act="ledEdit" data-id="${e.id}">Düzenle</button> <button class="b s d" data-act="ledDel" data-id="${e.id}">Sil</button></td></tr>`).join('')||`<tr><td class="l muted" colspan="7">Bu ay kayıt yok.</td></tr>`}
   ${list.length?`<tr class="tot"><td class="l">TOPLAM</td>${type==='lab'?'<td></td><td></td>':'<td></td>'}<td>${fmt(tot)}</td><td></td><td></td><td></td></tr>`:''}</tbody></table></div></div>
   <div class="card"><h2>${type==='lab'?'Teknisyen bazında':'Kişi / başlık bazında'}</h2><table><tbody>${Object.keys(groups).sort(trSort).map(k=>`<tr><td class="l">${esc(k)}</td><td>${fmt(groups[k])}</td></tr>`).join('')||'<tr><td class="l muted">Kayıt yok</td></tr>'}
   ${list.length?`<tr class="tot"><td class="l">Toplam</td><td>${fmt(tot)}</td></tr>`:''}</tbody></table>${extra}</div></div>`}
@@ -495,7 +535,7 @@ function renderAylik(){
   <div class="card"><div class="row between"><h2 style="margin:0">Doktor ödemeleri</h2>${monthBar()}
     <div class="row noprint"><button class="b s" data-act="xlsMonth">Ayı Excel'e aktar</button><button class="b s" data-act="print">Yazdır / PDF</button><button class="b s p" data-act="mailMonth">Ay sonu raporunu e-postayla gönder</button></div></div>
     <p class="muted small noprint">Fatura, banka, sigorta, implant adedi ve "diğer" alanlarını tabloya yazın. Banka/sigorta boş kalırsa doktorun varsayılan değeri kullanılır. "Diğer"e eksi değer de yazılabilir.</p>
-    <div class="scroll"><table><thead><tr><th class="l">Doktor</th><th>Genel</th><th>İade</th><th>Sonuç</th><th>Teknisyen</th><th>Sonuç</th><th>Oran</th><th>Yüzde</th><th>Avans</th><th>Sonuç</th><th>KK</th><th>Fatura</th><th>KK − Fatura</th><th>KK kesinti</th><th>Sonuç</th><th>Banka</th><th>Sonuç</th><th>Sigorta</th><th>Sonuç</th><th>İmplant adet</th><th>İmplant tutar</th><th>Diğer (+/−)</th><th>NET ÖDEME</th></tr></thead>
+    <div class="scroll"><table class="sticky1"><thead><tr><th class="l">Doktor</th><th>Genel</th><th>İade</th><th>Sonuç</th><th>Teknisyen</th><th>Sonuç</th><th>Oran</th><th>Yüzde</th><th>Avans</th><th>Sonuç</th><th>KK</th><th>Fatura</th><th>KK − Fatura</th><th>KK kesinti</th><th>Sonuç</th><th>Banka</th><th>Sonuç</th><th>Sigorta</th><th>Sonuç</th><th>İmplant adet</th><th>İmplant tutar</th><th>Diğer (+/−)</th><th>NET ÖDEME</th></tr></thead>
     <tbody>${rows||'<tr><td class="l muted" colspan="23">Hakediş hesaplanan doktor yok.</td></tr>'}${docs.length?`<tr class="tot" id="aylikTot">${totRow(m,docs)}</tr>`:''}</tbody></table></div></div>
   <div class="grid2" style="grid-template-columns:1fr 1fr"><div class="card"><h2>Teknisyen ödemeleri</h2><div id="techBox"></div></div><div class="card"><h2>Ay özeti</h2><div class="kpis" id="aySummary"></div></div></div>`;
   updateAylik(true)}
@@ -543,7 +583,7 @@ function renderYonetim(){
     <p class="muted small">Hakediş: işaretli değilse (ör. İmplant, Pan) Genel sayfasında sütun olarak görünür ama ödeme hesaplanmaz. KK oranı boşsa genel oran (%${fmt(s.kkRate)}) kullanılır. Değişiklikler kutudan çıkınca kaydedilir.</p>
     ${(()=>{const j=S.doctors.filter(d=>typeof specialCol==='function'&&specialCol(d.name)!==null);return j.length?`<div class="hint">Excel aktarımında yanlışlıkla başlık olarak eklenmiş görünenler: <b>${j.map(d=>esc(d.name)).join(', ')}</b>. Bunlar doktor değil, Excel'in toplam/harcama/KK sütunları. <button class="b s p" data-act="cleanJunk">Bunları ve kayıtlarını temizle</button></div>`:''})()}
     ${S.doctors.length?'':`<div class="hint">Liste boş. Aşağıdan tek tek ekleyebilir ya da Excel'den aktarırken isimleri otomatik ekletebilirsiniz.</div>`}
-    <div class="scroll"><table><thead><tr><th class="l">Ad</th><th>Hakediş</th><th>Yüzde %</th><th>KK kesintisi</th><th>KK oranı %</th><th>Fatura</th><th>İmplant primi</th><th>Birim ücret</th><th>Vars. banka</th><th>Vars. sigorta</th><th></th></tr></thead><tbody>
+    <div class="scroll"><table class="sticky1"><thead><tr><th class="l">Ad</th><th>Hakediş</th><th>Yüzde %</th><th>KK kesintisi</th><th>KK oranı %</th><th>Fatura</th><th>İmplant primi</th><th>Birim ücret</th><th>Vars. banka</th><th>Vars. sigorta</th><th></th></tr></thead><tbody>
     ${act.map(d=>`<tr><td class="l in"><input class="w" data-doc="${d.id}" data-df="name" value="${esc(d.name)}"></td>
       <td><input type="checkbox" data-doc="${d.id}" data-df="pay" ${d.pay!==false?'checked':''}></td>
       <td class="in"><input data-doc="${d.id}" data-df="rate" value="${fmt(d.rate)}" style="width:70px"></td>

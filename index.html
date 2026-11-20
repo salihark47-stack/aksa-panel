@@ -46,6 +46,12 @@ th{font-size:12px;color:var(--muted);font-weight:600;background:#f8fafb}
 .card{min-width:0}
 td.note{white-space:normal;min-width:120px;max-width:280px;word-break:break-word}
 .only-m,.only-mi{display:none}
+.qlist{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.qrow{padding:9px 12px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:minmax(200px,1fr) minmax(260px,1.3fr);gap:6px 12px;align-items:center}
+.qrow:last-child{border-bottom:0}.qbad{background:#fff8e6}
+.qh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;min-width:0}.qt{font-size:12px;color:var(--muted);min-width:110px}.qs{font-weight:600;word-break:break-word}.qw{font-size:12px;color:#9a6700}
+.qc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.qp{display:flex;gap:6px;flex:1 1 180px;flex-wrap:wrap}.qp select{flex:1 1 150px;min-width:0}.qa{width:130px}
+.qrow>.small{grid-column:1 / -1}
 .sticky1 th:first-child,.sticky1 td:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:1px 0 0 var(--line)}
 .sticky1 th:first-child{background:#f8fafb;z-index:3}.sticky1 tr.tot td:first-child{background:#eef4f4}.sticky1 tr.sel td:first-child{background:#e5f2f1}
 table.exp td.l{white-space:normal;word-break:break-word}
@@ -81,6 +87,7 @@ tr.click{cursor:pointer}tr.click:hover td{background:#f6faf9}tr.sel td{backgroun
   .toast{left:12px;right:12px;bottom:12px;text-align:center}
   .only-m{display:block}.only-mi{display:inline}.hide-m{display:none!important}
   .lcard{margin:12px auto;padding:20px}
+  .qrow{grid-template-columns:1fr}.qc{justify-content:stretch}.qa{flex:1 1 120px;width:auto}.qt{min-width:0}
 }
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:14px}
 .kpi{background:#f8fafb;border:1px solid var(--line);border-radius:10px;padding:9px 10px}
@@ -381,7 +388,7 @@ function typing(){const f=document.activeElement;return!!f&&main.contains(f)&&/^
 const main=$('main');
 function wrapTables(root){root.querySelectorAll('table').forEach(t=>{if(t.closest('.scroll,.tw'))return;const w=document.createElement('div');w.className='tw';t.parentNode.insertBefore(w,t);w.appendChild(t)})}
 new MutationObserver(()=>wrapTables(main)).observe(main,{childList:true,subtree:true});
-const TABS=[['genel','Genel (Günlük)'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['lab','Teknisyen İşleri'],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['yonetim','Yönetim',1]];
+const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['lab','Teknisyen İşleri'],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['yonetim','Yönetim',1]];
 function buildNav(){$('nav').innerHTML=TABS.filter(t=>!t[2]||isAdmin()).map(([k,l])=>`<button data-tab="${k}">${l}</button>`).join('')}
 $('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;U.tab=b.dataset.tab;U.edit={};render();window.scrollTo(0,0)});
 const ACT={},CHANGE=[],INPUT=[];
@@ -393,7 +400,7 @@ function monthBar(){return`<div class="mbar"><button class="b s" data-act="mPrev
 ACT.mPrev=()=>{U.month=shiftMonth(U.month,-1);U.edit={};render()};
 ACT.mNext=()=>{U.month=shiftMonth(U.month,1);U.edit={};render()};
 ACT.mNow=()=>{U.month=ym(todayStr());U.edit={};render()};
-const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),yonetim:()=>renderYonetim()};
+const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),yonetim:()=>renderYonetim()};
 function render(){
   if(!isAdmin()&&TABS.find(t=>t[0]===U.tab&&t[2]))U.tab='genel';
   syncWatch();settingsDirty=false;
@@ -1087,6 +1094,132 @@ ACT.impDel=async a=>{const id=a.dataset.id,v=(S.settings.importLog||{})[id];if(!
     await store.patchSettings({importLog:{[id]:DEL},...(Object.keys(purge).length?{doctors:purge}:{})});
     IMP.undo=null;IMP.result=null;toast('Aktarım silindi',1);setTimeout(()=>{if(U.tab==='imp')renderImport()},800)}catch(e){alert('Silme yarıda kaldı: '+errMsg(e))}};
 function docUsedIn(all,doc){return Object.values(all).some(m=>Object.values(m.days||{}).some(x=>x&&x.e&&+x.e[doc])||['kk','avans','iade','lab'].some(t=>Object.values(m[t]||{}).some(e=>e&&e.docId===doc))||!!(m.monthly||{})[doc])}
+
+/* ================= HIZLI GİRİŞ (metinden) ================= */
+const QK={text:'',plan:null,map:{},saved:null};
+const QTYPE={earn:'Kazanç',expT:'Harcama toplamı',exp:'Harcama kalemi',kkT:'KK toplamı (POS)',kk:'Kredi kartı',avans:'Avans',iade:'İade',lab:'Teknisyen işi',note:'Günün notu'};
+function quickPrompt(){
+  const docs=S.doctors.filter(d=>d.active!==false).map(d=>d.name),techs=S.technicians.filter(t=>t.active!==false).map(t=>t.name);
+  return`Bu fotoğraf ${S.settings.clinicName||'kliniğimizin'} günlük hesap föyü. Föydeki her şeyi aşağıdaki biçimde, SADECE bu biçimde ve tek bir kod bloğu içinde yaz. Başka açıklama ekleme.
+
+TARİH: GG.AA.YYYY
+KAZANÇ:
+<doktor veya başlık adı>: <tutar>
+HARCAMA TOPLAM: <günün toplam harcaması>
+HARCAMA: <ne için> <tutar>
+KK TOPLAM: <günün toplam kredi kartı / POS>
+KK: <doktor adı> <tutar>
+AVANS: <doktor veya teknisyen adı> <tutar>
+İADE: <doktor adı> <tutar> <varsa açıklama>
+TEKNİSYEN: <teknisyen adı> / <doktor adı> <tutar>
+NOT: <varsa günün notu>
+
+Kurallar:
+- İsimleri sadece şu listeden seç: ${docs.join(', ')}${techs.length?`. Teknisyenler: ${techs.join(', ')}`:''}. Listede olmayan bir isim görürsen föyde yazdığı gibi yaz.
+- Tutarları sadece rakamla yaz (ör. 35000). TL, nokta veya "bin" yazma.
+- Föyde olmayan satırları hiç yazma. Boş olan doktorları yazma.
+- Bir rakamı net okuyamıyorsan satırın sonuna (?) koy.
+- Föyde birden fazla gün varsa her gün için yeni bir "TARİH:" satırıyla başla.
+- Harcama kalemleri toplam harcamanın içindeyse HARCAMA TOPLAM satırını da yaz.`}
+function qNum(s){s=String(s).trim().toLocaleLowerCase('tr');let mul=1;if(/\bbin\b/.test(s))mul=1000;const m=s.match(/-?\d[\d.,]*/);if(!m)return null;let v=parseNum(m[0]);return v*mul}
+function qSplit(rest){// "İsim tutar açıklama" → {name, amount, note, unsure}
+  const unsure=/\(\?\)|\?\s*$/.test(rest);rest=rest.replace(/\(\?\)/g,'').replace(/\?\s*$/,'').trim();
+  const i=rest.search(/-?\d/);if(i<0)return{name:rest.replace(/[:\-–]+$/,'').trim(),amount:null,note:'',unsure:true};
+  const name=rest.slice(0,i).replace(/[:\-–=]+\s*$/,'').trim();const tail=rest.slice(i);const m=tail.match(/^-?\d[\d.,]*(\s*bin)?(\s*(tl|₺))?/i);
+  return{name,amount:qNum(m[0]),note:tail.slice(m[0].length).replace(/^[\s\-–,:()]+|[\s)]+$/g,'').trim(),unsure}}
+function qWho(name,techs){if(!name)return'';if(/^klinik$/i.test(normName(name)))return'';const w=matchPerson(name,techs);return w&&(techs||w.startsWith('d:'))?w:''}
+function quickParse(text){
+  const out=[],errs=[];let date=null,mode=null;const today=todayStr();
+  text.replace(/\r/g,'').split('\n').forEach((raw,ln)=>{
+    let l=raw.replace(/^[\s*•\-–>#`]+/,'').replace(/[`*]+$/,'').trim();if(!l||/^```/.test(l))return;
+    const low=l.toLocaleLowerCase('tr'),key=normName(low.split(/[:：]/)[0]);
+    const after=l.includes(':')?l.slice(l.search(/[:：]/)+1).trim():'';
+    if(/^tar[iı]h$/.test(key)){const d=cellDate(after.replace(/\s.*/,''))||cellDate(after);if(d){date=d;mode=null}else errs.push(`Satır ${ln+1}: tarih okunamadı (${after})`);return}
+    const add=(type,o)=>{if(!date){date=today;errs.push('Tarih satırı bulunamadı; bugünün tarihi kullanıldı.')}out.push({date,type,...o,line:ln+1})};
+    if(/^(kazanc|kazanç|kazanclar|kazançlar|genel|doktorlar|hekimler)$/.test(key)&&!after){mode='earn';return}
+    if(/^(harcama|harcamalar|gider|giderler)$/.test(key)&&!after){mode='exp';return}
+    if(/^(kk|kredikarti|kredikartı|pos)$/.test(key)&&!after){mode='kk';return}
+    if(/^avans(lar)?$/.test(key)&&!after){mode='avans';return}
+    if(/^iade(ler)?$/.test(key)&&!after){mode='iade';return}
+    if(/^(teknisyen|teknisyenler|lab|laboratuvar)$/.test(key)&&!after){mode='lab';return}
+    if(/^(harcamatoplam|toplamharcama|harcamatoplami|toplamgider)$/.test(key)){add('expT',{amount:qNum(after),unsure:/\?/.test(after)});return}
+    if(/^(kktoplam|toplamkk|pos|postoplam|kredikartitoplam|kredikartıtoplam)$/.test(key)){add('kkT',{amount:qNum(after),unsure:/\?/.test(after)});return}
+    if(/^(not|notlar|aciklama|açıklama)$/.test(key)){add('note',{note:after});return}
+    const pref={harcama:'exp',gider:'exp',kk:'kk',kredikarti:'kk',kredikartı:'kk',avans:'avans',iade:'iade',teknisyen:'lab',lab:'lab',kazanc:'earn',kazanç:'earn'}[key];
+    const body=pref?after:l;const type=pref||mode||'earn';
+    if(/^(toplam|kalan|net|nk|netkalan|genel ?toplam)\b/i.test(body.toLocaleLowerCase('tr').replace(/[:\s].*$/,''))&&type==='earn')return;// toplam satırları atla
+    if(type==='exp'){const p=qSplit(body);add('exp',{desc:p.name||p.note,amount:p.amount,unsure:p.unsure});return}
+    if(type==='lab'){const parts=body.split('/');let tName,dRest;if(parts.length>1){tName=parts[0].trim();dRest=parts.slice(1).join('/')}else{const p=qSplit(body);tName=p.name;dRest=String(p.amount??'')+' '+p.note}
+      const p=qSplit(dRest);add('lab',{tech:tName,name:p.name,amount:p.amount,note:p.note,unsure:p.unsure});return}
+    const p=qSplit(body);add(type,{name:p.name,amount:p.amount,note:p.note,unsure:p.unsure})});
+  return{items:out,errs:[...new Set(errs)]}}
+function quickResolve(){const P=QK.plan;if(!P)return;P.items.forEach((it,i)=>{
+  if(['earn','kk','avans','iade'].includes(it.type)){const k='n:'+normName(it.name||'');it.who=QK.map[k]!==undefined?QK.map[k]:qWho(it.name,it.type==='avans');it.key=k}
+  if(it.type==='lab'){const k='t:'+normName(it.tech||'');const tw=QK.map[k]!==undefined?QK.map[k]:(()=>{const w=matchPerson(it.tech||'',true);return w&&w.startsWith('t:')?w:''})();it.tw=tw;it.tkey=k;
+    const dk='n:'+normName(it.name||'');it.who=it.name?(QK.map[dk]!==undefined?QK.map[dk]:qWho(it.name,false)):'';it.key=dk}})}
+function quickRender(){
+  const P=QK.plan;
+  let h=`<div class="card"><h2>Hızlı giriş — föyü metinden aktar</h2>
+    <ol class="small" style="margin:0 0 10px;padding-left:18px"><li>Aşağıdaki <b>"Claude için talimatı kopyala"</b> düğmesine basın.</li><li>Claude'da yeni bir sohbete föyün fotoğrafını ekleyin, talimatı yapıştırıp gönderin.</li><li>Claude'un verdiği metni kopyalayıp buraya yapıştırın ve <b>"Oku"</b>'ya basın. Kaydetmeden önce kontrol edersiniz.</li></ol>
+    <div class="row" style="margin-bottom:8px"><button class="b" data-act="qPrompt">Claude için talimatı kopyala</button></div>
+    <textarea id="qText" rows="9" style="width:100%;font-family:ui-monospace,Consolas,monospace;font-size:14px" placeholder="TARİH: 20.11.2026&#10;KAZANÇ:&#10;Çağla: 35000&#10;Ceyhun: 94000&#10;HARCAMA TOPLAM: 20000&#10;HARCAMA: Defter 1200&#10;KK TOPLAM: 106000&#10;AVANS: Serra 10000">${esc(QK.text)}</textarea>
+    <div class="row" style="margin-top:8px"><button class="b p" data-act="qRead">Oku</button>${QK.text?'<button class="b" data-act="qClear">Temizle</button>':''}</div></div>`;
+  if(QK.saved)h+=`<div class="card"><h2 class="ok-t">Kaydedildi ✓</h2><p>${QK.saved}</p></div>`;
+  if(P){quickResolve();const docs=S.doctors,techs=S.technicians;
+    const opt=(cur,techsToo)=>`<option value="">— seçin / aktarma —</option>${docs.filter(d=>d.active!==false||cur==='d:'+d.id).map(d=>`<option value="d:${d.id}" ${cur==='d:'+d.id?'selected':''}>${esc(d.name)}</option>`).join('')}${techsToo?techs.map(t=>`<option value="t:${t.id}" ${cur==='t:'+t.id?'selected':''}>${esc(t.name)} (teknisyen)</option>`).join(''):''}`;
+    const topt=cur=>`<option value="">— seçin —</option>${techs.filter(t=>t.active!==false||cur==='t:'+t.id).map(t=>`<option value="t:${t.id}" ${cur==='t:'+t.id?'selected':''}>${esc(t.name)}</option>`).join('')}`;
+    const dates=[...new Set(P.items.map(i=>i.date))].sort();
+    h+=`<div class="card"><h2>Önizleme</h2>${P.errs.map(e=>`<div class="hint">${esc(e)}</div>`).join('')}`;
+    if(!P.items.length)h+='<p class="muted">Metinde okunacak satır bulunamadı. Claude\'un verdiği metni olduğu gibi yapıştırdığınızdan emin olun.</p>';
+    dates.forEach(d=>{const its=P.items.filter(i=>i.date===d);const ex=getDay(d);const has=Object.values(ex.e).some(v=>+v)||ex.h||ex.kk;
+      const earn=its.filter(i=>i.type==='earn'&&i.amount),expT=its.find(i=>i.type==='expT'),expI=its.filter(i=>i.type==='exp'&&i.amount),kkT=its.find(i=>i.type==='kkT');
+      const top=sum(earn.map(i=>i.amount)),har=expT&&expT.amount?expT.amount:sum(expI.map(i=>i.amount)),kk=kkT&&kkT.amount?kkT.amount:0;
+      h+=`<h3>${trDate(d)}${has?' <span class="small" style="color:#9a6700">— bu günde panelde kayıt var; aynı doktorların kazancı, harcama toplamı ve KK toplamı güncellenir</span>':''}</h3>
+      <div class="qlist">
+      ${its.map((it,ix)=>{const gi=P.items.indexOf(it);let pnl='';
+        if(['earn','kk','avans','iade'].includes(it.type))pnl=`<select data-qmap="${esc(it.key)}">${opt(it.who,it.type==='avans')}${it.type==='kk'?`<option value="x" ${it.who==='x'?'selected':''}>Diğer başlık: ${esc(it.name||'')}</option>`:''}</select>`;
+        else if(it.type==='lab')pnl=`<select data-qmap="${esc(it.tkey)}">${topt(it.tw)}</select><select data-qmap="${esc(it.key)}">${opt(it.who,false).replace('— seçin / aktarma —','— klinik (doktora yansımasın) —')}</select>`;
+        const bad=(it.amount==null&&it.type!=='note')||it.unsure||(['earn','avans','iade'].includes(it.type)&&!it.who)||(it.type==='lab'&&!it.tw);
+        const src=it.type==='lab'?(it.tech||'')+' / '+(it.name||''):it.type==='exp'?(it.desc||''):it.type==='note'?(it.note||''):(it.name||'');
+        return`<div class="qrow${bad?' qbad':''}"><div class="qh"><span class="qt">${QTYPE[it.type]}</span><span class="qs">${esc(src)}</span>${it.unsure?'<span class="qw" title="Claude emin değil">⚠ emin değil</span>':''}</div>
+          <div class="qc">${pnl?`<div class="qp">${pnl}</div>`:''}${it.type!=='note'?`<input class="num qa" inputmode="decimal" data-qamt="${gi}" value="${it.amount!=null?fmt(it.amount):''}" placeholder="Tutar">`:''}</div>
+          ${it.note&&it.type!=='note'?`<div class="small muted">${esc(it.note)}</div>`:''}</div>`}).join('')}</div>
+      <div class="kpis"><div class="kpi"><div class="k">Toplam</div><div class="v">${fmt(top)}</div></div><div class="kpi"><div class="k">Harcama</div><div class="v">${fmt(har)}</div></div><div class="kpi"><div class="k">Kalan</div><div class="v">${fmt(top-har)}</div></div><div class="kpi"><div class="k">Kredi kartı</div><div class="v">${fmt(kk)}</div></div><div class="kpi net"><div class="k">NET (nakit)</div><div class="v">${fmtc(top-har-kk)}</div></div></div>`});
+    const warn=P.items.filter(it=>(it.amount==null&&it.type!=='note')||it.unsure||(['earn','avans','iade'].includes(it.type)&&!it.who)||(it.type==='lab'&&!it.tw)).length;
+    if(P.items.length)h+=`<p class="small ${warn?'':'muted'}" style="${warn?'color:#9a6700':''}">${warn?`Sarı satırları kontrol edin (${warn}): ismi eşleşmeyen, tutarı okunamayan ya da Claude'un emin olmadığı satırlar. Panelde karşılığı seçilmeyen satırlar kaydedilmez.`:'Bütün satırlar eşleşti.'}</p>
+      <div class="row"><button class="b p big" data-act="qSave">Kaydet</button><span class="muted small">Aynı metni tekrar kaydederseniz kayıtlar çoğalmaz.</span></div>`;
+    h+='</div>'}
+  main.innerHTML=h}
+ACT.qPrompt=()=>{const t=quickPrompt();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Talimat kopyalandı. Claude\'a föyün fotoğrafıyla birlikte yapıştırın.',1),()=>{QK.text='';main.querySelector('#qText').value=t;toast('Kopyalanamadı; talimat kutuya yazıldı, oradan kopyalayın.',1)})};
+ACT.qRead=()=>{QK.text=$('qText').value;QK.saved=null;QK.map={};QK.plan=quickParse(QK.text);quickRender();const c=main.querySelectorAll('.card')[1];if(c&&c.scrollIntoView)c.scrollIntoView({behavior:'smooth'})};
+ACT.qClear=()=>{QK.text='';QK.plan=null;QK.saved=null;quickRender()};
+CHANGE.push(t=>{if(U.tab!=='hizli')return;
+  if(t.id==='qText'){QK.text=t.value;return}
+  if(t.dataset.qmap!==undefined){QK.map[t.dataset.qmap]=t.value;quickRender();return}
+  if(t.dataset.qamt!==undefined){const it=QK.plan.items[+t.dataset.qamt];const v=parseNum(t.value);it.amount=t.value.trim()===''?null:v;it.unsure=false;quickRender()}});
+ACT.qSave=async()=>{const P=QK.plan;if(!P)return;quickResolve();
+  const P2={},Pm=m=>P2[m]=P2[m]||{};const occ={};let n=0,skip=0;const byWho=S.name||S.email;
+  const dayP=d=>{const p=Pm(ym(d));p.days=p.days||{};return p.days[d]=p.days[d]||{}};
+  for(const it of P.items){const d=it.date;
+    if(it.type==='note'){if(it.note){dayP(d).n=it.note;n++}continue}
+    if(it.amount==null||!it.amount){skip++;continue}
+    if(it.type==='earn'){if(!it.who||!it.who.startsWith('d:')){skip++;continue}const x=dayP(d);x.e=x.e||{};x.e[it.who.slice(2)]=(x.e[it.who.slice(2)]&&x.__seen&&x.__seen[it.who]?x.e[it.who.slice(2)]:0)+it.amount;x.__seen=x.__seen||{};x.__seen[it.who]=1;n++;continue}
+    if(it.type==='expT'){dayP(d).h=it.amount;n++;continue}
+    if(it.type==='kkT'){dayP(d).kk=it.amount;n++;continue}
+    const kid=[it.type,d,it.who||it.name||it.desc||'',it.tw||'',it.amount].join('|');occ[kid]=(occ[kid]||0)+1;const id='q'+hash(kid+'|'+occ[kid]);
+    if(it.type==='exp'){const x=dayP(d);x.x=x.x||{};x.x[id]={d:it.desc||'—',a:it.amount,by:S.uid,bn:byWho,at:Date.now()};n++;continue}
+    const e={date:d,amount:it.amount,note:it.note||'',docId:null,techId:null,title:'',by:S.uid,bn:byWho,at:Date.now()};
+    if(it.type==='lab'){if(!it.tw){skip++;continue}e.techId=it.tw.slice(2);e.docId=it.who&&it.who.startsWith('d:')?it.who.slice(2):null}
+    else if(it.who==='x'||(!it.who&&it.type==='kk')){if(!it.name){skip++;continue}e.title=it.name}
+    else if(!it.who){skip++;continue}
+    else if(it.who.startsWith('d:'))e.docId=it.who.slice(2);else e.techId=it.who.slice(2);
+    const p=Pm(ym(d));p[it.type]=p[it.type]||{};p[it.type][id]=e;n++}
+  Object.values(P2).forEach(p=>Object.values(p.days||{}).forEach(x=>delete x.__seen));
+  if(!n){toast('Kaydedilecek satır yok');return}
+  if(!confirm(`${n} kayıt kaydedilecek${skip?`, ${skip} satır eşleşmediği/okunamadığı için atlanacak`:''}. Devam?`))return;
+  try{for(const[m,p]of Object.entries(P2))await store.patchMonth(m,p);
+    const ds=[...new Set(P.items.map(i=>i.date))].sort();QK.saved=`${ds.map(trDate).join(', ')} için ${n} kayıt panele işlendi.${skip?` ${skip} satır atlandı.`:''} Genel sayfasından kontrol edebilirsiniz.`;
+    QK.plan=null;QK.text='';U.date=ds[ds.length-1]||U.date;U.month=ym(U.date);syncWatch();quickRender();toast('Kaydedildi',1)}catch(e){alert('Kaydedilemedi: '+errMsg(e))}};
 
 /* ================= GİRİŞ / BAŞLATMA ================= */
 function show(id){['login','gate','app'].forEach(x=>{$(x).hidden=x!==id})}

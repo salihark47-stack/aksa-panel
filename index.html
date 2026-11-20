@@ -336,11 +336,12 @@ const techById=id=>S.technicians.find(t=>t.id===id);
 const docName=id=>{const d=docById(id);return d?d.name:'(silinmiş)'};
 const techName=id=>id?((techById(id)||{name:'(silinmiş)'}).name):'Excel aktarımı';
 const Mo=m=>S.months[m]||{};
-function getDay(d){const x=(Mo(ym(d)).days||{})[d]||{};return{e:x.e||{},x:x.x||{},kk:+x.kk||0,n:x.n||''}}
-const dayHas=x=>!!x&&(Object.values(x.e||{}).some(v=>+v)||Object.keys(x.x||{}).length>0||!!+x.kk||!!x.n);
+function getDay(d){const x=(Mo(ym(d)).days||{})[d]||{};const xx={...(x.x||{})};let h=+x.h||0;if(xx.imp_exp){if(!h)h=+xx.imp_exp.a||0;delete xx.imp_exp}return{e:x.e||{},x:xx,h,kk:+x.kk||0,n:x.n||''}}
+const dayHas=x=>!!x&&(Object.values(x.e||{}).some(v=>+v)||Object.keys(x.x||{}).length>0||!!+x.h||!!+x.kk||!!x.n);
 function monthDays(m){const ds=Mo(m).days||{};return Object.keys(ds).filter(k=>dayHas(ds[k])).sort()}
 function expList(day){return Object.entries(day.x).map(([id,v])=>({id,...v})).sort((a,b)=>(a.at||0)-(b.at||0))}
-function dayCalc(d){const x=getDay(d);const toplam=sum(Object.values(x.e)),harcama=sum(Object.values(x.x).map(e=>e.a)),kalan=toplam-harcama;return{toplam,harcama,kalan,kk:x.kk,net:kalan-x.kk}}
+function expInfo(x){const items=sum(Object.values(x.x).map(e=>e.a));return{total:x.h,items,harcama:x.h>0?x.h:items,rest:x.h>0?x.h-items:0}}
+function dayCalc(d){const x=getDay(d);const toplam=sum(Object.values(x.e)),harcama=expInfo(x).harcama,kalan=toplam-harcama;return{toplam,harcama,kalan,kk:x.kk,net:kalan-x.kk}}
 function entries(type,m){return Object.entries(Mo(m)[type]||{}).map(([id,e])=>({id,...e})).filter(e=>e&&e.date).sort((a,b)=>a.date.localeCompare(b.date)||(a.at||0)-(b.at||0))}
 function mget(m,id){return(Mo(m).monthly||{})[id]||{}}
 function whoLabel(e){if(e.docId)return docName(e.docId);if(e.techId)return techName(e.techId)+' (teknisyen)';return e.title||'—'}
@@ -418,8 +419,11 @@ function renderGenel(){
     ${docs.length?'':`<div class="hint">Henüz doktor yok.${isAdmin()?' Yönetim sekmesinden doktor ekleyin.':' Yöneticinizden doktorları eklemesini isteyin.'}</div>`}
     <table><thead><tr><th class="l">Doktor / başlık</th><th>Bugünkü kazanç (₺)</th></tr></thead><tbody>
     ${docs.map(x=>`<tr><td class="l">${esc(x.name)}</td><td class="in"><input inputmode="decimal" data-earn="${x.id}" placeholder="0"></td></tr>`).join('')}</tbody></table>
-    <h3>Harcamalar</h3><div id="expList"></div>
-    <div class="row" style="margin-top:6px"><input id="expDesc" placeholder="Ne için? (ör. Market, Kargo)" style="flex:1;min-width:150px" data-enter="expAdd"><input id="expAmt" class="num" placeholder="Tutar" inputmode="decimal" data-enter="expAdd"><button class="b s p" data-act="expAdd">Ekle</button></div>
+    <h3>Harcamalar</h3>
+    <div class="row"><label class="f">Günün toplam harcaması<input class="num" inputmode="decimal" id="dayH" placeholder="0"></label></div>
+    <div id="expList"></div>
+    <div class="row" style="margin-top:6px"><input id="expDesc" placeholder="Ne için? (boşsa toplam harcama)" style="flex:1;min-width:150px" data-enter="expAdd"><input id="expAmt" class="num" placeholder="Tutar" inputmode="decimal" data-enter="expAdd"><button class="b s p" data-act="expAdd">Ekle</button></div>
+    <div class="muted small" style="margin-top:4px">Açıklama yazmazsanız tutar günün <b>toplam harcaması</b> olur. Açıklama yazarsanız (ör. defter 1.200) toplamın <b>içinden</b> bir kalem olarak listelenir, toplama eklenmez. Toplam girilmemişse kalemlerin toplamı harcama sayılır.</div>
     <h3>Kredi kartı</h3><div class="row"><label class="f">Günün toplam kredi kartı (POS)<input class="num" inputmode="decimal" id="dayKK" placeholder="0"></label><span id="kkHint"></span></div>
     <label class="f" style="margin-top:10px">Günün notu<input id="dayNote"></label>
     <div class="kpis" id="dayKpis"></div><div class="muted small" style="margin-top:8px">Yazdığınız her değer kutudan çıkınca kaydedilir ve diğer cihazlarda da görünür.</div></div>
@@ -432,7 +436,12 @@ function refreshGenel(){
   const n=$('dayNote');if(n&&n!==document.activeElement)n.value=day.n;
   const kkPage=sum(entries('kk',ym(U.date)).filter(e=>e.date===U.date).map(e=>e.amount));const h=$('kkHint');
   if(h)h.innerHTML=kkPage&&Math.abs(kkPage-day.kk)>0.01?`<button class="b s" data-act="kkFromPage">Kredi Kartı sayfasındaki toplamı al (${fmt(kkPage)})</button>`:'';
-  const el=$('expList');if(el){const xs=expList(day);el.innerHTML=xs.length?`<table class="exp"><tbody>${xs.map(x=>`<tr><td class="l">${esc(x.d||'—')}${x.bn?` <span class="muted small">· ${esc(x.bn)}</span>`:''}</td><td>${fmt(x.a)} ₺</td><td style="width:1%"><button class="b s d" data-act="expDel" data-id="${x.id}">Sil</button></td></tr>`).join('')}<tr class="tot"><td class="l">Toplam harcama</td><td>${fmt(sum(xs.map(e=>e.a)))} ₺</td><td></td></tr></tbody></table>`:'<div class="muted small">Bu gün için harcama girilmedi.</div>'}
+  const hi=$('dayH');if(hi&&hi!==document.activeElement)hi.value=day.h?fmt(day.h):'';
+  const el=$('expList');if(el){const xs=expList(day),ei=expInfo(day);
+    el.innerHTML=xs.length?`<div class="small muted" style="margin:8px 0 4px">${day.h?'Toplamın dökümü':'Harcama kalemleri'}</div><table class="exp"><tbody>${xs.map(x=>`<tr><td class="l">${esc(x.d||'—')}${x.bn?` <span class="muted small">· ${esc(x.bn)}</span>`:''}</td><td>${fmt(x.a)} ₺</td><td style="width:1%"><button class="b s d" data-act="expDel" data-id="${x.id}">Sil</button></td></tr>`).join('')}
+      ${day.h?`<tr><td class="l muted">Açıklaması girilmeyen kısım</td><td class="${ei.rest<0?'neg':'muted'}">${fmt(ei.rest)} ₺</td><td></td></tr>`:''}
+      <tr class="tot"><td class="l">${day.h?'Toplam harcama':'Kalemlerin toplamı = harcama'}</td><td>${fmt(ei.harcama)} ₺</td><td></td></tr></tbody></table>
+      ${ei.rest<0?'<div class="neg small">Dökümdeki kalemlerin toplamı, girilen toplam harcamadan fazla. Toplamı ya da kalemleri kontrol edin.</div>':''}`:'<div class="muted small" style="margin-top:4px">Döküm kalemi yok.</div>'}
   const c=dayCalc(U.date);const kp=$('dayKpis');if(kp)kp.innerHTML=[['Toplam',c.toplam],['Harcama',c.harcama],['Kalan',c.kalan],['Kredi kartı',c.kk]].map(([a,v])=>`<div class="kpi"><div class="k">${a}</div><div class="v">${fmtc(v)}</div></div>`).join('')+`<div class="kpi net"><div class="k">NET (nakit)</div><div class="v">${fmtc(c.net)}</div></div>`;
   renderMonthTable()}
 function renderMonthTable(){
@@ -451,7 +460,11 @@ ACT.dayNext=()=>setDate(shiftDay(U.date,1));
 ACT.dayToday=()=>setDate(todayStr());
 ACT.goDay=a=>setDate(a.dataset.d);
 ACT.expAdd=()=>{const ds=$('expDesc'),am=$('expAmt'),v=parseNum(am.value);if(!v){am.focus();toast('Harcama tutarını yazın');return}
-  patchMonth(ym(U.date),{days:{[U.date]:{x:{[uid()]:{d:ds.value.trim(),a:v,...me()}}}}});ds.value='';am.value='';ds.focus()};
+  const desc=ds.value.trim(),day=getDay(U.date);
+  if(!desc){if(day.h&&day.h!==v&&!confirm(`Günün toplam harcaması ${fmt(day.h)} ₺ olarak girilmiş. ${fmt(v)} ₺ olarak değiştirilsin mi?`))return;
+    patchMonth(ym(U.date),{days:{[U.date]:{h:v,x:{imp_exp:DEL}}}});toast('Toplam harcama: '+fmt(v)+' ₺')}
+  else{patchMonth(ym(U.date),{days:{[U.date]:{x:{[uid()]:{d:desc,a:v,...me()}}}}});if(day.h&&expInfo(day).items+v>day.h)toast('Uyarı: kalemlerin toplamı, günün toplam harcamasını aşıyor',1)}
+  ds.value='';am.value='';ds.focus()};
 ACT.expDel=a=>{if(!confirm('Bu harcama silinsin mi?'))return;patchMonth(ym(U.date),{days:{[U.date]:{x:{[a.dataset.id]:DEL}}}})};
 ACT.kkFromPage=()=>{const v=sum(entries('kk',ym(U.date)).filter(e=>e.date===U.date).map(e=>e.amount));patchMonth(ym(U.date),{days:{[U.date]:{kk:v||DEL}}})};
 CHANGE.push(t=>{
@@ -459,6 +472,7 @@ CHANGE.push(t=>{
   if(t.id==='dayDate'&&t.value)return setDate(t.value);
   const m=ym(U.date),d=U.date;
   if(t.dataset.earn){const v=parseNum(t.value);t.value=v?fmt(v):'';if(v!==(+getDay(d).e[t.dataset.earn]||0))patchMonth(m,{days:{[d]:{e:{[t.dataset.earn]:v||DEL}}}})}
+  else if(t.id==='dayH'){const v=parseNum(t.value);t.value=v?fmt(v):'';if(v!==getDay(d).h)patchMonth(m,{days:{[d]:{h:v||DEL,x:{imp_exp:DEL}}}})}
   else if(t.id==='dayKK'){const v=parseNum(t.value);t.value=v?fmt(v):'';if(v!==getDay(d).kk)patchMonth(m,{days:{[d]:{kk:v||DEL}}})}
   else if(t.id==='dayNote'){const v=t.value.trim();if(v!==getDay(d).n)patchMonth(m,{days:{[d]:{n:v||DEL}}})}});
 
@@ -703,7 +717,7 @@ function shAylik(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthNam
 function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shLedger('kk',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
 async function withMonths(fn){const all=await store.allMonths();const keep=S.months;S.months=Object.assign({},all,keep);try{return fn(Object.keys(all).sort())}finally{S.months=keep}}
 async function allWorkbook(){return withMonths(ms=>{const g=[H(['Tarih','Doktor / Kalem','Tür','Tutar','Not','Giren'])];
-  ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});expList(x).forEach(e=>g.push([trDate(k),e.d||'—','Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
+  ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});if(x.h)g.push([trDate(k),'Günün toplam harcaması','Harcama (toplam)',x.h,'',''] );expList(x).forEach(e=>g.push([trDate(k),e.d||'—',x.h?'Harcama dökümü (toplamın içinde)':'Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
   const led=t=>{const r=[H(t==='lab'?['Tarih','Ay','Teknisyen','Doktor','Tutar','Açıklama','Giren']:['Tarih','Ay','Kime','Tutar','Açıklama','Giren'])];ms.forEach(m=>entries(t,m).forEach(e=>r.push(t==='lab'?[trDate(e.date),monthName(m),techName(e.techId),e.docId?docName(e.docId):'Klinik',e.amount,e.note||'',e.bn||'']:[trDate(e.date),monthName(m),whoLabel(e),e.amount,e.note||'',e.bn||''])));return r};
   const ay=[];ms.forEach(m=>{ay.push([{v:monthName(m),b:1}],H(AY_H),...ayRows(m),[])});
   return buildXlsx([{name:'Aylık Hesaplar',rows:ay},{name:'Günlük Kayıtlar',rows:g},{name:'Kredi Kartı',rows:led('kk')},{name:'Avans',rows:led('avans')},{name:'İade',rows:led('iade')},{name:'Teknisyen İşleri',rows:led('lab')}])})}
@@ -1003,7 +1017,7 @@ async function impApply(){
   IMP.R.forEach(R=>{if(R.kind==='skip'||R.kind==='son'||R.err)return;const occ={};
     itemsOf(R).forEach(it=>{const m=ym(it.date);if(!IMP.months[m])return;const r=res(it.who);if(!r)return;
       if(R.kind==='earn'){const p=Pm(m);p.days=p.days||{};const d=p.days[it.date]=p.days[it.date]||{e:{}};
-        if(r.special==='exp'){d.x=d.x||{};const prev=d.x.imp_exp?d.x.imp_exp.a:0;d.x.imp_exp={d:'Excel\'den aktarılan günlük harcama',a:prev+it.amount,by:S.uid,bn:S.name||S.email,at:Date.now()};Km(m).x.push(it.date)}
+        if(r.special==='exp'){d.h=(d.h||0)+it.amount;d.x={imp_exp:DEL};Km(m).x.push(it.date)}
         else if(r.special==='kk'){d.kk=(d.kk||0)+it.amount;Km(m).kk.push(it.date)}
         else{if(!r.docId)return;d.e[r.docId]=(d.e[r.docId]||0)+it.amount;Km(m).e.push([it.date,r.docId])}mark(m,'earn')}
       else{const key=[R.kind,it.date,r.docId||r.techId,it.amount].join('|');occ[key]=(occ[key]||0)+1;const id='x'+hash(key+'|'+occ[key]);
@@ -1066,7 +1080,7 @@ ACT.impDel=async a=>{const id=a.dataset.id,v=(S.settings.importLog||{})[id];if(!
   toast('Siliniyor…',1);try{await safetyDownload();
     for(const m of v.months||[]){const d=await store.getMonth(m);if(!d)continue;const raw=(d.imp||{})[id];if(!raw)continue;const k=JSON.parse(raw),p={imp:{[id]:DEL}};
       const day=dt=>{p.days=p.days||{};return p.days[dt]=p.days[dt]||{}};
-      k.e.forEach(([dt,doc])=>{const x=day(dt);x.e=x.e||{};x.e[doc]=DEL});k.x.forEach(dt=>{day(dt).x={imp_exp:DEL}});k.kk.forEach(dt=>{day(dt).kk=DEL});
+      k.e.forEach(([dt,doc])=>{const x=day(dt);x.e=x.e||{};x.e[doc]=DEL});k.x.forEach(dt=>{const y=day(dt);y.x={imp_exp:DEL};y.h=DEL});k.kk.forEach(dt=>{day(dt).kk=DEL});
       Object.entries(k.led).forEach(([t,ids])=>ids.forEach(i=>{p[t]=p[t]||{};p[t][i]=DEL}));k.monthly.forEach(doc=>{p.monthly=p.monthly||{};p.monthly[doc]=DEL});
       await store.patchMonth(m,p)}
     const nd=v.newDocs||[];const purge={};if(nd.length){const all=await store.allMonths();nd.forEach(doc=>{if(!docUsedIn(all,doc))purge[doc]=DEL})}

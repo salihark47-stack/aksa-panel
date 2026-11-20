@@ -333,6 +333,7 @@ let store=null;
 const FOY_DEFAULT=`- Her doktor sütununda yukarıda tek tek işlemler ve kırmızı hasta/protokol numaraları var; bunları YAZMA.
 - Turuncu/kırmızı çizginin ALTINDAKİ sayılar o doktorun gün sonu özetidir: mavi/siyah olan doktorun o günkü toplam kazancı (KAZANÇ), yeşil olan kredi kartı (KK), kırmızı olan fatura (FATURA). Hangisi yoksa o satırı yazma.
 - Bir sütunda alt kısımda başka bir doktorun adı (ör. Dt. Eren) veya İMPLANT yazıyorsa, onun altındaki çizginin altındaki sayılar o başlığa aittir.
+- Harcamaların içinde vergi ödemesi (vergi, KDV, stopaj, muhtasar vb.) varsa bunların toplamını VERGİ satırına yaz.
 - Sağdaki Harcamalar kalemlerini yazma. Alt kısımdaki Toplam'ı TOPLAM, K.K'yı KK TOPLAM olarak yaz. Genel Harcama yazıyorsa onu, yoksa Harcamalar toplamını HARCAMA TOPLAM olarak yaz.
 - NE, NE+SH ve Kalan satırlarını yazma.`;
 const DEF_SETTINGS={clinicName:'',kkRate:5,doctors:{},technicians:{},email:'',scriptUrl:'',token:'',autoDaily:true,autoMonthly:true,lastDailyBackup:'',lastMonthlyReport:''};
@@ -348,12 +349,14 @@ const techById=id=>S.technicians.find(t=>t.id===id);
 const docName=id=>{const d=docById(id);return d?d.name:'(silinmiş)'};
 const techName=id=>id?((techById(id)||{name:'(silinmiş)'}).name):'Excel aktarımı';
 const Mo=m=>S.months[m]||{};
-function getDay(d){const x=(Mo(ym(d)).days||{})[d]||{};const xx={...(x.x||{})};let h=+x.h||0;if(xx.imp_exp){if(!h)h=+xx.imp_exp.a||0;delete xx.imp_exp}return{e:x.e||{},x:xx,h,kk:+x.kk||0,n:x.n||''}}
-const dayHas=x=>!!x&&(Object.values(x.e||{}).some(v=>+v)||Object.keys(x.x||{}).length>0||!!+x.h||!!+x.kk||!!x.n);
+function getDay(d){const x=(Mo(ym(d)).days||{})[d]||{};const xx={...(x.x||{})};let h=+x.h||0;if(xx.imp_exp){if(!h)h=+xx.imp_exp.a||0;delete xx.imp_exp}return{e:x.e||{},x:xx,h,kk:+x.kk||0,vg:+x.vg||0,n:x.n||''}}
+const dayHas=x=>!!x&&(Object.values(x.e||{}).some(v=>+v)||Object.keys(x.x||{}).length>0||!!+x.h||!!+x.kk||!!+x.vg||!!x.n);
 function monthDays(m){const ds=Mo(m).days||{};return Object.keys(ds).filter(k=>dayHas(ds[k])).sort()}
 function expList(day){return Object.entries(day.x).map(([id,v])=>({id,...v})).sort((a,b)=>(a.at||0)-(b.at||0))}
 function expInfo(x){const items=sum(Object.values(x.x).map(e=>e.a));return{total:x.h,items,harcama:x.h>0?x.h:items,rest:x.h>0?x.h-items:0}}
-function dayCalc(d){const x=getDay(d);const toplam=sum(Object.values(x.e)),harcama=expInfo(x).harcama,kalan=toplam-harcama;return{toplam,harcama,kalan,kk:x.kk,net:kalan-x.kk}}
+const VERGI_RE=/vergi|kdv|stopaj|muhtasar|damga|ba[gğ]-?kur|sgk/i;
+function dayVergi(x){return x.vg?x.vg:sum(Object.values(x.x).filter(e=>VERGI_RE.test(e.d||'')).map(e=>e.a))}
+function dayCalc(d){const x=getDay(d);const toplam=sum(Object.values(x.e)),harcama=expInfo(x).harcama,kalan=toplam-harcama;return{toplam,harcama,vergi:dayVergi(x),kalan,kk:x.kk,net:kalan-x.kk}}
 function entries(type,m){return Object.entries(Mo(m)[type]||{}).map(([id,e])=>({id,...e})).filter(e=>e&&e.date).sort((a,b)=>a.date.localeCompare(b.date)||(a.at||0)-(b.at||0))}
 function mget(m,id){return(Mo(m).monthly||{})[id]||{}}
 function whoLabel(e){if(e.docId)return docName(e.docId);if(e.techId)return techName(e.techId)+' (teknisyen)';return e.title||'—'}
@@ -432,7 +435,7 @@ function renderGenel(){
     <table><thead><tr><th class="l">Doktor / başlık</th><th>Bugünkü kazanç (₺)</th></tr></thead><tbody>
     ${docs.map(x=>`<tr><td class="l">${esc(x.name)}</td><td class="in"><input inputmode="decimal" data-earn="${x.id}" placeholder="0"></td></tr>`).join('')}</tbody></table>
     <h3>Harcamalar</h3>
-    <div class="row"><label class="f">Günün toplam harcaması<input class="num" inputmode="decimal" id="dayH" placeholder="0"></label></div>
+    <div class="row"><label class="f">Günün toplam harcaması<input class="num" inputmode="decimal" id="dayH" placeholder="0"></label><label class="f">İçindeki vergi<input class="num" inputmode="decimal" id="dayV" placeholder="0"></label></div>
     <div id="expList"></div>
     <div class="row" style="margin-top:6px"><input id="expDesc" placeholder="Ne için? (boşsa toplam harcama)" style="flex:1;min-width:150px" data-enter="expAdd"><input id="expAmt" class="num" placeholder="Tutar" inputmode="decimal" data-enter="expAdd"><button class="b s p" data-act="expAdd">Ekle</button></div>
     <div class="muted small" style="margin-top:4px">Açıklama yazmazsanız tutar günün <b>toplam harcaması</b> olur. Açıklama yazarsanız (ör. defter 1.200) toplamın <b>içinden</b> bir kalem olarak listelenir, toplama eklenmez. Toplam girilmemişse kalemlerin toplamı harcama sayılır.</div>
@@ -448,23 +451,23 @@ function refreshGenel(){
   const n=$('dayNote');if(n&&n!==document.activeElement)n.value=day.n;
   const kkPage=sum(entries('kk',ym(U.date)).filter(e=>e.date===U.date).map(e=>e.amount));const h=$('kkHint');
   if(h)h.innerHTML=kkPage&&Math.abs(kkPage-day.kk)>0.01?`<button class="b s" data-act="kkFromPage">Kredi Kartı sayfasındaki toplamı al (${fmt(kkPage)})</button>`:'';
-  const hi=$('dayH');if(hi&&hi!==document.activeElement)hi.value=day.h?fmt(day.h):'';
+  const hi=$('dayH');if(hi&&hi!==document.activeElement)hi.value=day.h?fmt(day.h):'';const vi=$('dayV');if(vi&&vi!==document.activeElement)vi.value=day.vg?fmt(day.vg):'';
   const el=$('expList');if(el){const xs=expList(day),ei=expInfo(day);
     el.innerHTML=xs.length?`<div class="small muted" style="margin:8px 0 4px">${day.h?'Toplamın dökümü':'Harcama kalemleri'}</div><table class="exp"><tbody>${xs.map(x=>`<tr><td class="l">${esc(x.d||'—')}${x.bn?` <span class="muted small">· ${esc(x.bn)}</span>`:''}</td><td>${fmt(x.a)} ₺</td><td style="width:1%"><button class="b s d" data-act="expDel" data-id="${x.id}">Sil</button></td></tr>`).join('')}
       ${day.h?`<tr><td class="l muted">Açıklaması girilmeyen kısım</td><td class="${ei.rest<0?'neg':'muted'}">${fmt(ei.rest)} ₺</td><td></td></tr>`:''}
       <tr class="tot"><td class="l">${day.h?'Toplam harcama':'Kalemlerin toplamı = harcama'}</td><td>${fmt(ei.harcama)} ₺</td><td></td></tr></tbody></table>
       ${ei.rest<0?'<div class="neg small">Dökümdeki kalemlerin toplamı, girilen toplam harcamadan fazla. Toplamı ya da kalemleri kontrol edin.</div>':''}`:'<div class="muted small" style="margin-top:4px">Döküm kalemi yok.</div>'}
-  const c=dayCalc(U.date);const kp=$('dayKpis');if(kp)kp.innerHTML=[['Toplam',c.toplam],['Harcama',c.harcama],['Kalan',c.kalan],['Kredi kartı',c.kk]].map(([a,v])=>`<div class="kpi"><div class="k">${a}</div><div class="v">${fmtc(v)}</div></div>`).join('')+`<div class="kpi net"><div class="k">NET (nakit)</div><div class="v">${fmtc(c.net)}</div></div>`;
+  const c=dayCalc(U.date);const kp=$('dayKpis');if(kp)kp.innerHTML=[['Toplam',c.toplam],['Harcama',c.harcama],...(c.vergi?[['İçindeki vergi',c.vergi]]:[]),['Kalan',c.kalan],['Kredi kartı',c.kk]].map(([a,v])=>`<div class="kpi"><div class="k">${a}</div><div class="v">${fmtc(v)}</div></div>`).join('')+`<div class="kpi net"><div class="k">NET (nakit)</div><div class="v">${fmtc(c.net)}</div></div>`;
   renderMonthTable()}
 function renderMonthTable(){
   const el=$('monthTable');if(!el)return;const m=U.month,days=monthDays(m);
   if(!days.length){el.innerHTML='<div class="muted">Bu ay için kayıt yok.</div>';return}
   const docs=S.doctors.filter(d=>days.some(k=>+((Mo(m).days[k].e||{})[d.id])));
-  const T={toplam:0,harcama:0,kalan:0,kk:0,net:0},DT={};
+  const T={toplam:0,harcama:0,vergi:0,kalan:0,kk:0,net:0},DT={};
   const rows=days.map(k=>{const x=getDay(k),c=dayCalc(k);Object.keys(T).forEach(f=>T[f]+=c[f]);docs.forEach(d=>DT[d.id]=(DT[d.id]||0)+(+x.e[d.id]||0));
-    return`<tr class="click ${k===U.date?'sel':''}" data-act="goDay" data-d="${k}"><td class="l">${trDate(k)}</td>${docs.map(d=>`<td>${x.e[d.id]?fmt(x.e[d.id]):''}</td>`).join('')}<td><b>${fmt(c.toplam)}</b></td><td title="${esc(expList(x).map(e=>(e.d||'—')+': '+fmt(e.a)).join('\n'))}">${fmt(c.harcama)}</td><td>${fmt(c.kalan)}</td><td>${fmt(c.kk)}</td><td class="netc">${fmtc(c.net)}</td><td class="l small muted note">${esc(x.n)}</td></tr>`}).join('');
-  el.innerHTML=`<table class="sticky1"><thead><tr><th class="l">Tarih</th>${docs.map(d=>`<th>${esc(d.name)}</th>`).join('')}<th>Toplam</th><th>Harcama</th><th>Kalan</th><th>Kredi kartı</th><th>Net</th><th class="l">Not</th></tr></thead><tbody>${rows}
-  <tr class="tot"><td class="l">AY TOPLAMI</td>${docs.map(d=>`<td>${fmt(DT[d.id])}</td>`).join('')}<td>${fmt(T.toplam)}</td><td>${fmt(T.harcama)}</td><td>${fmt(T.kalan)}</td><td>${fmt(T.kk)}</td><td class="netc">${fmtc(T.net)}</td><td></td></tr></tbody></table>
+    return`<tr class="click ${k===U.date?'sel':''}" data-act="goDay" data-d="${k}"><td class="l">${trDate(k)}</td>${docs.map(d=>`<td>${x.e[d.id]?fmt(x.e[d.id]):''}</td>`).join('')}<td><b>${fmt(c.toplam)}</b></td><td title="${esc(expList(x).map(e=>(e.d||'—')+': '+fmt(e.a)).join('\n'))}">${fmt(c.harcama)}</td><td>${c.vergi?fmt(c.vergi):''}</td><td>${fmt(c.kalan)}</td><td>${fmt(c.kk)}</td><td class="netc">${fmtc(c.net)}</td><td class="l small muted note">${esc(x.n)}</td></tr>`}).join('');
+  el.innerHTML=`<table class="sticky1"><thead><tr><th class="l">Tarih</th>${docs.map(d=>`<th>${esc(d.name)}</th>`).join('')}<th>Toplam</th><th>Harcama</th><th>Vergi</th><th>Kalan</th><th>Kredi kartı</th><th>Net</th><th class="l">Not</th></tr></thead><tbody>${rows}
+  <tr class="tot"><td class="l">AY TOPLAMI</td>${docs.map(d=>`<td>${fmt(DT[d.id])}</td>`).join('')}<td>${fmt(T.toplam)}</td><td>${fmt(T.harcama)}</td><td>${fmt(T.vergi)}</td><td>${fmt(T.kalan)}</td><td>${fmt(T.kk)}</td><td class="netc">${fmtc(T.net)}</td><td></td></tr></tbody></table>
   <div class="muted small" style="margin-top:6px">Satıra tıklayınca o günü açar.<span class="hide-m"> Harcama hücresinin üzerine gelince kalemleri görürsünüz.</span><span class="only-mi">Tabloyu sağa kaydırarak tüm sütunları görebilirsiniz.</span></div>`}
 function setDate(d){U.date=d;U.month=ym(d);syncWatch();renderGenel()}
 ACT.dayPrev=()=>setDate(shiftDay(U.date,-1));
@@ -484,6 +487,7 @@ CHANGE.push(t=>{
   if(t.id==='dayDate'&&t.value)return setDate(t.value);
   const m=ym(U.date),d=U.date;
   if(t.dataset.earn){const v=parseNum(t.value);t.value=v?fmt(v):'';if(v!==(+getDay(d).e[t.dataset.earn]||0))patchMonth(m,{days:{[d]:{e:{[t.dataset.earn]:v||DEL}}}})}
+  else if(t.id==='dayV'){const v=parseNum(t.value);t.value=v?fmt(v):'';if(v!==getDay(d).vg)patchMonth(m,{days:{[d]:{vg:v||DEL}}})}
   else if(t.id==='dayH'){const v=parseNum(t.value);t.value=v?fmt(v):'';if(v!==getDay(d).h)patchMonth(m,{days:{[d]:{h:v||DEL,x:{imp_exp:DEL}}}})}
   else if(t.id==='dayKK'){const v=parseNum(t.value);t.value=v?fmt(v):'';if(v!==getDay(d).kk)patchMonth(m,{days:{[d]:{kk:v||DEL}}})}
   else if(t.id==='dayNote'){const v=t.value.trim();if(v!==getDay(d).n)patchMonth(m,{days:{[d]:{n:v||DEL}}})}});
@@ -577,9 +581,9 @@ function updateAylik(skipCells){
   if(tb)tb.innerHTML=`<table><thead><tr><th class="l">Teknisyen</th><th>İş</th><th>Toplam iş</th><th>Avans</th><th>Ödenecek</th><th class="l">Doktorlara dağılım</th></tr></thead><tbody>
     ${tc.map(x=>`<tr><td class="l"><b>${esc(x.t.name)}</b>${x.t.active===false?' <span class="muted small">(ayrıldı)</span>':''}</td><td>${x.count}</td><td>${fmt(x.total)}</td><td>${fmt(x.avans)}</td><td class="netc">${fmtc(x.net)}</td><td class="l small">${Object.keys(x.byDoc).sort(trSort).map(k=>esc(k)+': '+fmt(x.byDoc[k])).join(' · ')}</td></tr>`).join('')||'<tr><td class="l muted" colspan="6">Teknisyen kaydı yok.</td></tr>'}
     ${tc.length?`<tr class="tot"><td class="l">Toplam</td><td>${sum(tc.map(x=>x.count))}</td><td>${fmt(sum(tc.map(x=>x.total)))}</td><td>${fmt(sum(tc.map(x=>x.avans)))}</td><td class="netc">${fmt(sum(tc.map(x=>x.net)))}</td><td></td></tr>`:''}</tbody></table>`;
-  const sm=$('aySummary');if(sm){const dt={toplam:0,harcama:0,kk:0,net:0};monthDays(m).forEach(k=>{const c=dayCalc(k);dt.toplam+=c.toplam;dt.harcama+=c.harcama;dt.kk+=c.kk;dt.net+=c.net});const cs=docs.map(d=>calcDoc(m,d));
-    const items=[['Toplam ciro',dt.toplam],['Toplam iade',sum(entries('iade',m).map(e=>e.amount))],['Günlük harcamalar',dt.harcama],['Kredi kartı (günlük)',dt.kk],['Günlük net nakit',dt.net],['Verilen avanslar',sum(entries('avans',m).map(e=>e.amount))],['Doktorlara ödenecek',sum(cs.map(c=>c.net))],['Teknisyenlere ödenecek',sum(tc.map(x=>x.net))]];
-    sm.innerHTML=items.map(([k,v],i)=>`<div class="kpi ${i>=6?'net':''}"><div class="k">${k}</div><div class="v">${fmtc(v)}</div></div>`).join('')}}
+  const sm=$('aySummary');if(sm){const dt=monthDayTotals(m);const cs=docs.map(d=>calcDoc(m,d));
+    const items=[['Toplam ciro',dt.toplam],['Toplam iade',sum(entries('iade',m).map(e=>e.amount))],['Günlük harcamalar',dt.harcama],['Ödenen vergiler',dt.vergi],['Kredi kartı (günlük)',dt.kk],['Günlük net nakit',dt.net],['Verilen avanslar',sum(entries('avans',m).map(e=>e.amount))],['Doktorlara ödenecek',sum(cs.map(c=>c.net))],['Teknisyenlere ödenecek',sum(tc.map(x=>x.net))]];
+    sm.innerHTML=items.map(([k,v],i)=>`<div class="kpi ${i>=7?'net':''}"><div class="k">${k}</div><div class="v">${fmtc(v)}</div></div>`).join('')}}
 CHANGE.push(t=>{if(U.tab!=='aylik'||!t.dataset.mon)return;const f=t.dataset.field,raw=t.value.trim();const v=raw===''?DEL:parseNum(raw);if(raw!=='')t.value=fmt(v);
   patchMonth(U.month,{monthly:{[t.dataset.mon]:{[f]:v}}})});
 ACT.print=()=>window.print();
@@ -714,11 +718,13 @@ ACT.userReset=async a=>{if(!a.dataset.email)return;try{await store.reset(a.datas
 ACT.copyScript=()=>{navigator.clipboard.writeText(scriptCode()).then(()=>toast('Kod kopyalandı'),()=>toast('Kopyalanamadı, elle seçin'))};
 
 /* ================= DIŞARI AL / YEDEK / SİL ================= */
+function monthDayTotals(m){const dt={toplam:0,harcama:0,vergi:0,kk:0,net:0};monthDays(m).forEach(k=>{const c=dayCalc(k);for(const f in dt)dt[f]+=c[f]});return dt}
+function monthVergiList(m){const out=[];monthDays(m).forEach(k=>{const x=getDay(k);if(x.vg){const its=Object.values(x.x).filter(e=>VERGI_RE.test(e.d||''));out.push({date:k,d:its.length?its.map(e=>e.d).join(', '):'Vergi',a:x.vg})}else Object.values(x.x).filter(e=>VERGI_RE.test(e.d||'')).forEach(e=>out.push({date:k,d:e.d,a:e.a}))});return out}
 const XMIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const H=a=>a.map(v=>({v,h:1})),B=a=>a.map(v=>({v,b:1}));
 function shGenel(m){const days=monthDays(m),docs=S.doctors.filter(d=>days.some(k=>+getDay(k).e[d.id]));
-  const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Günlük Rapor',b:1}],[],H(['Tarih',...docs.map(d=>d.name),'Toplam','Harcama','Kalan','Kredi Kartı','Net','Harcama detayı','Not'])];const T=[0,0,0,0,0],DT=docs.map(()=>0);
-  days.forEach(k=>{const x=getDay(k),c=dayCalc(k);docs.forEach((d,i)=>DT[i]+=+x.e[d.id]||0);[c.toplam,c.harcama,c.kalan,c.kk,c.net].forEach((v,i)=>T[i]+=v);rows.push([trDate(k),...docs.map(d=>x.e[d.id]||''),c.toplam,c.harcama,c.kalan,c.kk,c.net,expList(x).map(e=>(e.d||'—')+': '+fmt(e.a)).join(' | '),x.n])});
+  const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Günlük Rapor',b:1}],[],H(['Tarih',...docs.map(d=>d.name),'Toplam','Harcama','Vergi','Kalan','Kredi Kartı','Net','Harcama detayı','Not'])];const T=[0,0,0,0,0,0],DT=docs.map(()=>0);
+  days.forEach(k=>{const x=getDay(k),c=dayCalc(k);docs.forEach((d,i)=>DT[i]+=+x.e[d.id]||0);[c.toplam,c.harcama,c.vergi,c.kalan,c.kk,c.net].forEach((v,i)=>T[i]+=v);rows.push([trDate(k),...docs.map(d=>x.e[d.id]||''),c.toplam,c.harcama,c.vergi||'',c.kalan,c.kk,c.net,expList(x).map(e=>(e.d||'—')+': '+fmt(e.a)).join(' | '),x.n])});
   rows.push(B(['TOPLAM',...DT,...T]));return{name:'Günlük Genel',rows}}
 function shLedger(type,m){const list=entries(type,m),rows=[[{v:LED[type].title+' — '+monthName(m),b:1}],[]];
   if(type==='lab'){rows.push(H(['Tarih','Teknisyen','Doktor','Tutar','Açıklama','Giren']));list.forEach(e=>rows.push([trDate(e.date),techName(e.techId),e.docId?docName(e.docId):'Klinik',e.amount,e.note||'',e.bn||'']));rows.push(B(['TOPLAM','','',sum(list.map(e=>e.amount)),'','']))}
@@ -729,10 +735,11 @@ function ayRows(m){const docs=monthDoctors(m),cs=docs.map(d=>calcDoc(m,d));const
   const T=f=>sum(cs.map(c=>c[f]));rows.push(B(['TOPLAM',T('genel'),T('iade'),T('s1'),T('tek'),T('s2'),'',T('yuzde'),T('avans'),T('s3'),T('kk'),T('fatura'),T('kkNet'),'',T('kkKes'),T('s4'),T('banka'),T('s5'),T('sigorta'),T('s6'),T('impAdet'),T('impTutar'),T('diger'),T('net')]));return rows}
 function shAylik(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Doktor Ödemeleri',b:1}],[],H(AY_H),...ayRows(m)];const tc=calcTechs(m);
   rows.push([],[{v:'Teknisyen ödemeleri',b:1}],H(['Teknisyen','İş sayısı','Toplam iş','Avans','Ödenecek','Doktorlara dağılım']));tc.forEach(x=>rows.push([x.t.name,x.count,x.total,x.avans,{v:x.net,b:1},Object.keys(x.byDoc).map(k=>k+': '+fmt(x.byDoc[k])).join(' | ')]));return{name:'Aylık Hesap',rows}}
-function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
+function shVergi(m){const vl=monthVergiList(m);const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Vergiler',b:1}],[],H(['Tarih','Açıklama','Tutar'])];vl.forEach(v=>rows.push([trDate(v.date),v.d,v.a]));rows.push(B(['TOPLAM','',sum(vl.map(v=>v.a))]));return{name:'Vergiler',rows}}
+function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
 async function withMonths(fn){const all=await store.allMonths();const keep=S.months;S.months=Object.assign({},all,keep);try{return fn(Object.keys(all).sort())}finally{S.months=keep}}
 async function allWorkbook(){return withMonths(ms=>{const g=[H(['Tarih','Doktor / Kalem','Tür','Tutar','Not','Giren'])];
-  ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});if(x.h)g.push([trDate(k),'Günün toplam harcaması','Harcama (toplam)',x.h,'',''] );expList(x).forEach(e=>g.push([trDate(k),e.d||'—',x.h?'Harcama dökümü (toplamın içinde)':'Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
+  ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});if(x.h)g.push([trDate(k),'Günün toplam harcaması','Harcama (toplam)',x.h,'',''] );if(x.vg)g.push([trDate(k),'Harcamanın içindeki vergi','Vergi',x.vg,'','']);expList(x).forEach(e=>g.push([trDate(k),e.d||'—',x.h?'Harcama dökümü (toplamın içinde)':'Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
   const led=t=>{const r=[H(t==='lab'?['Tarih','Ay','Teknisyen','Doktor','Tutar','Açıklama','Giren']:['Tarih','Ay','Kime','Tutar','Açıklama','Giren'])];ms.forEach(m=>entries(t,m).forEach(e=>r.push(t==='lab'?[trDate(e.date),monthName(m),techName(e.techId),e.docId?docName(e.docId):'Klinik',e.amount,e.note||'',e.bn||'']:[trDate(e.date),monthName(m),whoLabel(e),e.amount,e.note||'',e.bn||''])));return r};
   const ay=[];ms.forEach(m=>{ay.push([{v:monthName(m),b:1}],H(AY_H),...ayRows(m),[])});
   return buildXlsx([{name:'Aylık Hesaplar',rows:ay},{name:'Günlük Kayıtlar',rows:g},{name:'Kredi Kartı',rows:led('kk')},{name:'Fatura',rows:led('fatura')},{name:'Avans',rows:led('avans')},{name:'İade',rows:led('iade')},{name:'Teknisyen İşleri',rows:led('lab')}])})}
@@ -777,8 +784,8 @@ async function sendBackupMail(reason){const t=todayStr(),m=ym(t);const b=await f
   await sendMail(`[${cname()}] Günlük yedek – ${trDate(t)}`,`<p><b>${esc(cname())}</b> — ${esc(reason)} (${trDate(t)})</p><p>Ekteki .json dosyası tam yedektir (Panel → Yönetim → Yedekten geri yükle). .xlsx dosyası bu ayın raporudur.</p>`,
     [{name:`klinik-panel-yedek_${t}.json`,mimeType:'application/json',base64:u8ToB64(enc.encode(JSON.stringify(b)))},{name:`aylik-rapor_${m}.xlsx`,mimeType:XMIME,base64:u8ToB64(monthWorkbook(m))}])}
 async function sendMonthReport(m){if(!S.months[m])S.months[m]=await store.getMonth(m)||{};
-  const docs=monthDoctors(m),cs=docs.map(d=>calcDoc(m,d)),tc=calcTechs(m);const dt={toplam:0,harcama:0,kk:0,net:0};monthDays(m).forEach(k=>{const c=dayCalc(k);dt.toplam+=c.toplam;dt.harcama+=c.harcama;dt.kk+=c.kk;dt.net+=c.net});
-  const html=`<h2 style="font-family:Arial">${esc(cname())} — ${monthName(m)} Ay Sonu Raporu</h2>${tbl(['Toplam ciro','Harcama','Kredi kartı','Net nakit'],[[dt.toplam,dt.harcama,dt.kk,dt.net]])}
+  const docs=monthDoctors(m),cs=docs.map(d=>calcDoc(m,d)),tc=calcTechs(m);const dt=monthDayTotals(m);const vl=monthVergiList(m);
+  const html=`<h2 style="font-family:Arial">${esc(cname())} — ${monthName(m)} Ay Sonu Raporu</h2>${tbl(['Toplam ciro','Harcama','İçindeki vergi','Kredi kartı','Net nakit'],[[dt.toplam,dt.harcama,dt.vergi,dt.kk,dt.net]])}${vl.length?`<h3 style="font-family:Arial">Ödenen vergiler</h3>${tbl(['Tarih','Açıklama','Tutar'],[...vl.map(v=>[trDate(v.date),v.d,v.a]),['TOPLAM','',dt.vergi]])}`:''}
   <h3 style="font-family:Arial">Doktor ödemeleri</h3>${tbl(['Doktor','Genel','İade','Teknisyen','Yüzde','Avans','KK kesinti','Banka','Sigorta','İmplant','Diğer','NET'],docs.map((d,i)=>{const c=cs[i];return[d.name,c.genel,c.iade,c.tek,c.yuzde,c.avans,c.kkKes,c.banka,c.sigorta,c.impTutar,c.diger,c.net]}))}
   <h3 style="font-family:Arial">Teknisyen ödemeleri</h3>${tbl(['Teknisyen','İş','Toplam','Avans','Ödenecek'],tc.map(x=>[x.t.name,String(x.count),x.total,x.avans,x.net]))}`;
   await sendMail(`[${cname()}] ${monthName(m)} ay sonu raporu`,html,[{name:`aylik-rapor_${m}.xlsx`,mimeType:XMIME,base64:u8ToB64(monthWorkbook(m))}])}
@@ -1105,7 +1112,7 @@ function docUsedIn(all,doc){return Object.values(all).some(m=>Object.values(m.da
 
 /* ================= HIZLI GİRİŞ (metinden) ================= */
 const QK={text:'',plan:null,map:{},saved:null};
-const QTYPE={sumT:'Föydeki toplam',fatura:'Fatura',earn:'Kazanç',expT:'Harcama toplamı',exp:'Harcama kalemi',kkT:'KK toplamı (POS)',kk:'Kredi kartı',avans:'Avans',iade:'İade',lab:'Teknisyen işi',note:'Günün notu'};
+const QTYPE={sumT:'Föydeki toplam',fatura:'Fatura',earn:'Kazanç',expT:'Harcama toplamı',vergi:'Vergi (harcamanın içinde)',exp:'Harcama kalemi',kkT:'KK toplamı (POS)',kk:'Kredi kartı',avans:'Avans',iade:'İade',lab:'Teknisyen işi',note:'Günün notu'};
 function quickPrompt(){
   const docs=S.doctors.filter(d=>d.active!==false).map(d=>d.name),techs=S.technicians.filter(t=>t.active!==false).map(t=>t.name);
   return`Bu fotoğraf ${S.settings.clinicName||'kliniğimizin'} günlük hesap föyü. Föyü aşağıdaki biçimde, SADECE bu biçimde ve tek bir kod bloğu içinde yaz. Başka açıklama ekleme.
@@ -1123,6 +1130,7 @@ TEKNİSYEN: <teknisyen adı> / <doktor adı> <tutar>
 TOPLAM: <föydeki günlük toplam>
 KK TOPLAM: <föydeki toplam kredi kartı>
 HARCAMA TOPLAM: <günün harcaması>
+VERGİ: <harcamanın içindeki vergi ödemeleri toplamı>
 NOT: <varsa günün notu>
 
 Bu föy nasıl okunur:
@@ -1157,6 +1165,7 @@ function quickParse(text){
     if(/^fatura(lar)?$/.test(key)&&!after){mode='fatura';return}
     if(/^iade(ler)?$/.test(key)&&!after){mode='iade';return}
     if(/^(teknisyen|teknisyenler|lab|laboratuvar)$/.test(key)&&!after){mode='lab';return}
+    if(/^(vergi|vergiler|vergitoplam|toplamvergi)$/.test(key)){add('vergi',{amount:qNum(after),unsure:/\?/.test(after)});return}
     if(/^(harcamatoplam|toplamharcama|harcamatoplami|toplamgider)$/.test(key)){add('expT',{amount:qNum(after),unsure:/\?/.test(after)});return}
     if(/^(kktoplam|toplamkk|pos|postoplam|kredikartitoplam|kredikartıtoplam)$/.test(key)){add('kkT',{amount:qNum(after),unsure:/\?/.test(after)});return}
     if(/^(not|notlar|aciklama|açıklama)$/.test(key)){add('note',{note:after});return}
@@ -1232,6 +1241,7 @@ ACT.qSave=async()=>{const P=QK.plan;if(!P)return;quickResolve();
     if((it.amount==null||!it.amount)&&!it.fatOnly){skip++;continue}
     if(it.type==='earn'){if(!it.who||!it.who.startsWith('d:')){skip++;continue}const x=dayP(d);x.e=x.e||{};x.e[it.who.slice(2)]=(x.e[it.who.slice(2)]&&x.__seen&&x.__seen[it.who]?x.e[it.who.slice(2)]:0)+it.amount;x.__seen=x.__seen||{};x.__seen[it.who]=1;n++;continue}
     if(it.type==='expT'){dayP(d).h=it.amount;n++;continue}
+    if(it.type==='vergi'){dayP(d).vg=it.amount;n++;continue}
     if(it.type==='kkT'){dayP(d).kk=it.amount;n++;continue}
     const kid=[it.type,d,it.who||it.name||it.desc||'',it.tw||'',it.amount].join('|');occ[kid]=(occ[kid]||0)+1;const id='q'+hash(kid+'|'+occ[kid]);
     if(it.type==='exp'){const x=dayP(d);x.x=x.x||{};x.x[id]={d:it.desc||'—',a:it.amount,by:S.uid,bn:byWho,at:Date.now()};n++;continue}

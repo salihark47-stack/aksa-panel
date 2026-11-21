@@ -1121,9 +1121,7 @@ TARİH: GG.AA.YYYY
 KAZANÇ:
 <doktor veya başlık adı>: <tutar>
 KK:
-<doktor adı>: <tutar>
-FATURA:
-<doktor adı>: <tutar>
+<doktor adı>: <KK + fatura toplamı> (KK <kredi kartı> + fatura <fatura>)
 AVANS: <doktor veya teknisyen adı> <tutar>
 İADE: <doktor adı> <tutar> <varsa açıklama>
 TEKNİSYEN: <teknisyen adı> / <doktor adı> <tutar>
@@ -1141,7 +1139,8 @@ Kurallar:
 - Tutarları sadece rakamla yaz (ör. 35000). TL, nokta veya "bin" yazma.
 - Föyde olmayan satırları ve boş bölümleri hiç yazma.
 - Bir rakamı net okuyamıyorsan satırın sonuna (?) koy.
-- Yazmadan önce KAZANÇ toplamının TOPLAM'a, KK toplamının KK TOPLAM'a eşit olup olmadığını kontrol et; eşit değilse yanlış okuduğun rakamı tekrar incele.
+- KK bölümünde her doktor için kredi kartı ile faturayı birleştirip tek satırda yaz; ayrı bir FATURA bölümü yazma. Faturası olmayan doktor için sadece tutarı yaz (ör. Uğur: 7000). Sadece faturası olan doktoru da KK bölümüne yaz (ör. Çağla: 28600 (KK 0 + fatura 28600)).
+- Yazmadan önce KAZANÇ toplamının TOPLAM'a, KK bölümündeki kredi kartı kısımlarının (faturalar hariç) toplamının KK TOPLAM'a eşit olup olmadığını kontrol et; eşit değilse yanlış okuduğun rakamı tekrar incele.
 - Föyde birden fazla gün varsa her gün için yeni bir "TARİH:" satırıyla başla.`}
 function qNum(s){s=String(s).trim().toLocaleLowerCase('tr');let mul=1;if(/\bbin\b/.test(s))mul=1000;const m=s.match(/-?\d[\d.,]*/);if(!m)return null;let v=parseNum(m[0]);return v*mul}
 function qSplit(rest){// "İsim tutar açıklama" → {name, amount, note, unsure}
@@ -1177,6 +1176,10 @@ function quickParse(text){
     if(type==='exp'){const p=qSplit(body);add('exp',{desc:p.name||p.note,amount:p.amount,unsure:p.unsure});return}
     if(type==='lab'){const parts=body.split('/');let tName,dRest;if(parts.length>1){tName=parts[0].trim();dRest=parts.slice(1).join('/')}else{const p=qSplit(body);tName=p.name;dRest=String(p.amount??'')+' '+p.note}
       const p=qSplit(dRest);add('lab',{tech:tName,name:p.name,amount:p.amount,note:p.note,unsure:p.unsure});return}
+    if(type==='kk'&&/fatura/i.test(body)){const unsure=/\?/.test(body);const name=body.split(/[:：(]|\s-?\d/)[0].replace(/[:\-–=]+\s*$/,'').trim();
+      const fm=body.match(/fatura\s*[:=]?\s*(\d[\d.,]*)/i),km=body.match(/\b(?:kk|kredi\s*kart[ıi])\s*[:=]?\s*(\d[\d.,]*)/i),tm=body.slice(name.length).match(/\d[\d.,]*/);
+      const fat=fm?qNum(fm[1]):0;let kk=km?qNum(km[1]):(tm&&fm&&tm.index!==body.slice(name.length).indexOf(fm[1])?qNum(tm[0])-fat:null);
+      if(kk==null)kk=0;if(kk)add('kk',{name,amount:kk,note:'',unsure});if(fat)add('fatura',{name,amount:fat,note:'',unsure});return}
     const p=qSplit(body);add(type,{name:p.name,amount:p.amount,note:p.note,unsure:p.unsure})});
   return{items:out,errs:[...new Set(errs)]}}
 function quickResolve(){const P=QK.plan;if(!P)return;P.items.forEach((it,i)=>{

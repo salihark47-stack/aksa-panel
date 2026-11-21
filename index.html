@@ -43,10 +43,10 @@ label.c{display:inline-flex;gap:6px;align-items:center;font-size:13px}
 input,select,textarea{font:inherit;padding:8px 10px;border:1px solid #cdd8d7;border-radius:9px;background:#fff;color:var(--ink);max-width:100%}
 input:focus,select:focus,textarea:focus{outline:3px solid #cfe7e5;border-color:var(--pri)}
 input.num{text-align:right;width:130px}
-button.b{font:inherit;font-weight:500;padding:8px 14px;border-radius:9px;border:1px solid #cdd8d7;background:#fff;cursor:pointer;color:var(--ink)}
-button.b:hover{background:#f6f8fa}button.b:disabled{opacity:.6;cursor:wait}
+button.b,a.b{font:inherit;font-weight:500;padding:8px 14px;border-radius:9px;border:1px solid #cdd8d7;background:#fff;cursor:pointer;color:var(--ink)}
+a.b:hover,button.b:hover{background:#f6f8fa}button.b:disabled{opacity:.6;cursor:wait}
 button.p{background:var(--pri);border-color:var(--pri);color:#fff}button.p:hover{background:#0a4b51}
-button.d{color:var(--red)}button.s{padding:4px 10px;font-size:12px}button.big{padding:11px 20px;font-size:15px}
+button.d{color:var(--red)}button.s,a.b.s{padding:4px 10px;font-size:12px}button.big{padding:11px 20px;font-size:15px}
 table{border-collapse:collapse;width:100%}
 th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 td.wrap{white-space:normal}
@@ -121,7 +121,7 @@ td.in input{width:110px;padding:4px 6px;text-align:right}td.in input.w{width:160
 .chart{width:100%;height:auto;display:block}.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 4px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .hbars{display:grid;gap:5px}.hb{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:8px;align-items:center;font-size:13px}.hbk{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hbt{background:#eef1f4;border-radius:4px;height:12px;overflow:hidden}.hbt div{height:100%;border-radius:0 4px 4px 0}.hbv{font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
 .hero{margin-top:12px;padding:12px 14px;background:var(--pri2);border:1px solid #b9dcdc;border-radius:12px}.hero .k{font-size:13px;color:var(--muted)}.hero .v{font-size:28px;font-weight:800;margin:2px 0}
-.seg{display:flex;gap:4px}tr.late td{background:#fff4f2}.ptabs{flex-wrap:wrap}.cklist{display:grid;gap:4px}.ck{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px}.ck input{width:18px;height:18px;margin:0;accent-color:var(--pri)}.ck.on{background:var(--pri2);border-color:#b9dcdc}.ck.on span{color:var(--muted)}.ck em{font-style:normal;font-size:12px;color:var(--muted);white-space:nowrap}@media(max-width:700px){.ck{grid-template-columns:22px 1fr}.ck em{grid-column:2}}
+.seg{display:flex;gap:4px}tr.late td{background:#fff4f2}.ptabs{flex-wrap:wrap}.kpi-bad{background:#fff4f2;border-color:#f3c3be}.kpi-bad .v{color:var(--red)}a.b{text-decoration:none;display:inline-block}.cklist{display:grid;gap:4px}.ck{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px}.ck input{width:18px;height:18px;margin:0;accent-color:var(--pri)}.ck.on{background:var(--pri2);border-color:#b9dcdc}.ck.on span{color:var(--muted)}.ck em{font-style:normal;font-size:12px;color:var(--muted);white-space:nowrap}@media(max-width:700px){.ck{grid-template-columns:22px 1fr}.ck em{grid-column:2}}
 .alist{display:grid;gap:6px}.al{display:grid;grid-template-columns:190px 1fr;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:13px}.al b{font-weight:600}.al-min,.al-skt0{background:#fff4f2;border-color:#f3c3be}.al-skt{background:#fff8e6;border-color:#f3dca1}.al-fiyat{background:#eaf6ee;border-color:#bfe3cb}@media(max-width:700px){.al{grid-template-columns:1fr;gap:2px}}.g2e{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:14px}@media(max-width:700px){.g2e{grid-template-columns:minmax(0,1fr)}}.cat-s{font-size:12px;padding:2px 4px;margin-top:3px;max-width:100%}
 .hint{background:#fff8e6;border:1px solid #f3dca1;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}
 pre{background:#0f1720;color:#e6edf3;padding:12px;border-radius:8px;overflow:auto;font-size:12px}
@@ -433,9 +433,9 @@ function typing(){const f=document.activeElement;return!!f&&main.contains(f)&&/^
 const main=$('main');
 function wrapTables(root){root.querySelectorAll('table').forEach(t=>{if(t.closest('.scroll,.tw'))return;const w=document.createElement('div');w.className='tw';t.parentNode.insertBefore(w,t);w.appendChild(t)})}
 new MutationObserver(()=>wrapTables(main)).observe(main,{childList:true,subtree:true});
-const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['fatura','Fatura'],['lab','Teknisyen İşleri'],['labtakip','Lab Takip'],['stok','Stok'],['personel','Personel'],['kokpit','Kokpit',1],['kasa','Kasalar',1],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['kayit','Değişiklik Kaydı',1],['yonetim','Yönetim',1]];
-const TGROUP={genel:'Günlük iş',hizli:'Günlük iş',kk:'Kayıtlar',avans:'Kayıtlar',iade:'Kayıtlar',fatura:'Kayıtlar',lab:'Kayıtlar',labtakip:'Klinik işleyiş',stok:'Klinik işleyiş',personel:'Klinik işleyiş',kokpit:'Para ve raporlar',kasa:'Para ve raporlar',aylik:'Para ve raporlar',kayit:'Yönetim',imp:'Yönetim',yonetim:'Yönetim'};
-const TDESC={genel:'Doktorların günlük kazancı, harcamalar ve kredi kartı toplamı.',hizli:'Föyün fotoğrafını Claude\'a okutup çıkan metni buraya yapıştırın.',kk:'Doktor bazında kredi kartı ve fatura kayıtları.',avans:'Doktor ve teknisyenlere verilen avanslar.',iade:'Hastalara yapılan iadeler.',fatura:'Doktor adına kesilen faturalar.',lab:'Teknisyen hakedişine yazılan işler.',labtakip:'Laboratuvara giden işler, teslim tarihleri ve gecikmeler.',personel:'Açılış ve kapanış kontrolleri, sterilizasyon defteri, mesai, izinler ve asistan planı.',stok:'Malzeme stoku, son kullanma tarihleri, sipariş listesi ve internet fiyat takibi.',kokpit:'Kliniğin ay ve yıl bazında ciro, gider ve kâr özeti.',kasa:'Nakit, POS, banka ve döviz kasalarının bakiyeleri ve hareketleri.',aylik:'Doktor ve teknisyen ödemelerinin ay sonu hesabı.',kayit:'Panelde kimin neyi ne zaman değiştirdiği.',imp:'Eski Excel dosyalarını panele aktarın.',yonetim:'Doktorlar, teknisyenler, kasalar, kullanıcılar ve yedekler.'};
+const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['fatura','Fatura'],['lab','Teknisyen İşleri'],['hasta','Hasta Takibi'],['labtakip','Lab Takip'],['stok','Stok'],['personel','Personel'],['kokpit','Kokpit',1],['kasa','Kasalar',1],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['kayit','Değişiklik Kaydı',1],['yonetim','Yönetim',1]];
+const TGROUP={genel:'Günlük iş',hizli:'Günlük iş',kk:'Kayıtlar',avans:'Kayıtlar',iade:'Kayıtlar',fatura:'Kayıtlar',lab:'Kayıtlar',hasta:'Kayıtlar',labtakip:'Klinik işleyiş',stok:'Klinik işleyiş',personel:'Klinik işleyiş',kokpit:'Para ve raporlar',kasa:'Para ve raporlar',aylik:'Para ve raporlar',kayit:'Yönetim',imp:'Yönetim',yonetim:'Yönetim'};
+const TDESC={genel:'Doktorların günlük kazancı, harcamalar ve kredi kartı toplamı.',hizli:'Föyün fotoğrafını Claude\'a okutup çıkan metni buraya yapıştırın.',kk:'Doktor bazında kredi kartı ve fatura kayıtları.',avans:'Doktor ve teknisyenlere verilen avanslar.',iade:'Hastalara yapılan iadeler.',fatura:'Doktor adına kesilen faturalar.',lab:'Teknisyen hakedişine yazılan işler.',labtakip:'Laboratuvara giden işler, teslim tarihleri ve gecikmeler.',hasta:'Taksitli ve borçlu hastaların ödeme planları, tahsilatları ve geciken taksitler.',personel:'Açılış ve kapanış kontrolleri, sterilizasyon defteri, mesai, izinler ve asistan planı.',stok:'Malzeme stoku, son kullanma tarihleri, sipariş listesi ve internet fiyat takibi.',kokpit:'Kliniğin ay ve yıl bazında ciro, gider ve kâr özeti.',kasa:'Nakit, POS, banka ve döviz kasalarının bakiyeleri ve hareketleri.',aylik:'Doktor ve teknisyen ödemelerinin ay sonu hesabı.',kayit:'Panelde kimin neyi ne zaman değiştirdiği.',imp:'Eski Excel dosyalarını panele aktarın.',yonetim:'Doktorlar, teknisyenler, kasalar, kullanıcılar ve yedekler.'};
 function buildNav(){let g='',h='';TABS.filter(t=>!t[2]||isAdmin()).forEach(([k,l])=>{const gr=TGROUP[k]||'';if(gr!==g){h+=`<div class="ng">${gr}</div>`;g=gr}h+=`<button data-tab="${k}">${l}</button>`});$('nav').innerHTML=h}
 const navOpen=o=>document.body.classList.toggle('navopen',o);
 $('menuBtn').addEventListener('click',()=>navOpen(true));$('scrim').addEventListener('click',()=>navOpen(false));
@@ -449,7 +449,7 @@ function monthBar(){return`<div class="mbar"><button class="b s" data-act="mPrev
 ACT.mPrev=()=>{U.month=shiftMonth(U.month,-1);U.edit={};render()};
 ACT.mNext=()=>{U.month=shiftMonth(U.month,1);U.edit={};render()};
 ACT.mNow=()=>{U.month=ym(todayStr());U.edit={};render()};
-const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),fatura:()=>renderLedger('fatura'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),kokpit:()=>renderKokpit(),labtakip:()=>renderLabTakip(),stok:()=>renderStok(),personel:()=>renderPersonel(),kayit:()=>renderAudit(),kasa:()=>renderKasa(),yonetim:()=>renderYonetim()};
+const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),fatura:()=>renderLedger('fatura'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),kokpit:()=>renderKokpit(),labtakip:()=>renderLabTakip(),stok:()=>renderStok(),personel:()=>renderPersonel(),hasta:()=>renderHasta(),kayit:()=>renderAudit(),kasa:()=>renderKasa(),yonetim:()=>renderYonetim()};
 function render(){
   if(!isAdmin()&&TABS.find(t=>t[0]===U.tab&&t[2]))U.tab='genel';
   syncWatch();settingsDirty=false;
@@ -469,6 +469,7 @@ function refresh(){
   if(U.tab==='labtakip'&&!t)return refreshLab();
   if(U.tab==='stok'&&!t)return refreshStok();
   if(U.tab==='personel'&&!t)return renderPersonel();
+  if(U.tab==='hasta'&&!t)return refreshHasta();
   if(U.tab==='kokpit'&&ALL.m&&!t)return drawKokpit();
   if(U.tab==='yonetim'&&!t)return renderYonetim()}
 
@@ -853,7 +854,7 @@ function ayRows(m){const docs=monthDoctors(m),cs=docs.map(d=>calcDoc(m,d));const
 function shAylik(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Doktor Ödemeleri',b:1}],[],H(AY_H),...ayRows(m)];const tc=calcTechs(m);
   rows.push([],[{v:'Teknisyen ödemeleri',b:1}],H(['Teknisyen','İş sayısı','Toplam iş','Avans','Ödenecek','Doktorlara dağılım']));tc.forEach(x=>rows.push([x.t.name,x.count,x.total,x.avans,{v:x.net,b:1},Object.keys(x.byDoc).map(k=>k+': '+fmt(x.byDoc[k])).join(' | ')]));return{name:'Aylık Hesap',rows}}
 function shVergi(m){const vl=monthVergiList(m);const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Vergiler',b:1}],[],H(['Tarih','Açıklama','Tutar'])];vl.forEach(v=>rows.push([trDate(v.date),v.d,v.a]));rows.push(B(['TOPLAM','',sum(vl.map(v=>v.a))]));return{name:'Vergiler',rows}}
-function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shKategori(m),shKasa(m),shLab(m),shStok(m),shSteril(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
+function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shKategori(m),shKasa(m),shLab(m),shStok(m),shSteril(m),shHasta(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
 async function withMonths(fn){const all=await store.allMonths();const keep=S.months;S.months=Object.assign({},all,keep);try{return fn(Object.keys(all).sort())}finally{S.months=keep}}
 async function allWorkbook(){return withMonths(ms=>{const g=[H(['Tarih','Doktor / Kalem','Tür','Tutar','Not','Giren'])];
   ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});if(x.h)g.push([trDate(k),'Günün toplam harcaması','Harcama (toplam)',x.h,'',''] );if(x.vg)g.push([trDate(k),'Harcamanın içindeki vergi','Vergi',x.vg,'','']);expList(x).forEach(e=>g.push([trDate(k),e.d||'—',x.h?'Harcama dökümü (toplamın içinde)':'Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
@@ -1083,6 +1084,7 @@ function drawKokpit(){const el=$('kpBody');if(!el||U.tab!=='kokpit')return;
     const ks=kasaList(),B=kasaBalances(Object.keys(S.months).sort(),todayStr());
     el.innerHTML=`<div class="hero"><div class="k">${per} · tahmini net klinik kârı</div><div class="v ${r.kar<0?'neg':''}">${fmtc(r.kar)}</div><div class="muted small">Ciro − iadeler − günlük harcamalar − kasadan ödenen giderler − POS komisyonu − hekim payları (yüzde − KK kesintisi + implant + diğer) − teknisyen işleri</div></div>
       <div class="kpis">${tiles.map(([k,v])=>`<div class="kpi"><div class="k">${k.trim()===k?k:'<span style="padding-left:8px">↳ '+k.trim()+'</span>'}</div><div class="v">${fmtc(v)}</div></div>`).join('')}</div>
+      ${(()=>{const L=hpAll().filter(h=>!h.closed);if(!L.length)return'';const s=hpSummary(L);return`<h3>Hasta alacakları (bugün)</h3><div class="kpis"><div class="kpi"><div class="k">Bekleyen alacak</div><div class="v">${fmtc(s.alacak)}</div></div><div class="kpi ${s.gecikmis?'kpi-bad':''}"><div class="k">Vadesi geçmiş</div><div class="v">${fmtc(s.gecikmis)}</div></div><div class="kpi"><div class="k">Bu ay vadesi gelen</div><div class="v">${fmtc(s.buAyVade)}</div></div></div>`})()}
       ${ks.length?`<h3>Kasa bakiyeleri (bugün)</h3><div class="kpis">${ks.map(k=>`<div class="kpi"><div class="k">${esc(k.name)}</div><div class="v ${B[k.id].bal<0?'neg':''}">${fmtK(B[k.id].bal,k)}</div></div>`).join('')}</div>`:''}
       <div class="g2e"><div><h3>Son 12 ay: ciro ve toplam gider</h3><div class="lg"><span><i style="background:${C1}"></i>Ciro</span><span><i style="background:${C2}"></i>Toplam gider</span></div>${svgBars(trend.map(t=>({label:short(t.m),vals:[t.ciro,t.gider]})),{series:[{n:'Ciro',c:C1},{n:'Toplam gider',c:C2}]})}</div>
         <div><h3>Son 12 ay: tahmini net kâr</h3><div class="lg"><span class="muted small">Eksi aylar kırmızı</span></div>${svgBars(trend.map(t=>({label:short(t.m),vals:[t.kar]})),{series:[{n:'Net kâr',c:C1}],neg:1})}</div></div>
@@ -1100,7 +1102,7 @@ function shKasa(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName
   return{name:'Kasa',rows}}
 
 /* ================= DEĞİŞİKLİK KAYDI (DENETİM) ================= */
-const REC_LED=['kk','avans','iade','fatura','lab','kh','lj','sm','ot','iz'];
+const REC_LED=['kk','avans','iade','fatura','lab','kh','lj','sm','ot','iz','hp','ho'];
 const isPlain=v=>v&&typeof v==='object'&&!Array.isArray(v)&&v!==DEL;
 function getPath(o,p){for(const k of p){if(!o||typeof o!=='object')return undefined;o=o[k]}return o}
 function isRecPath(scope,p,base){if(scope==='settings')return p.length===2&&['doctors','technicians','kasalar','stok','personel'].includes(p[0])&&getPath(base,p)===undefined;
@@ -1114,6 +1116,8 @@ const LJ_ST={gonderildi:'Gönderildi',prova:'Provada',teslim:'Teslim alındı',t
 function recText(p,r){if(!r||typeof r!=='object')return r==null?'—':(typeof r==='number'?fmt(r):String(r));
   const L=p[0];if(['doctors','technicians','kasalar','stok','personel'].includes(L))return r.name||'—';if(L==='days')return`${r.d||'—'} ${fmt(r.a)} ₺${r.c?' ('+r.c+')':''}`;
   if(L==='kh')return`${r.kind==='in'?'Giriş':r.kind==='out'?'Çıkış':'Transfer'} ${kasaName(r.kasa)}${r.to?' → '+kasaName(r.to):''} ${fmt(r.amount)}${r.note?' · '+r.note:''}`;
+  if(L==='hp')return`${r.name||''}${r.dosya?' #'+r.dosya:''} · toplam ${fmt(r.toplam)} ₺ · ${(r.taksit||[]).length} taksit`;
+  if(L==='ho')return`${r.date?trDate(r.date)+' · ':''}${r.hn||(()=>{const h=withAll(()=>hpAll()).find(x=>x.id===r.hid);return h?h.name:''})()} ${fmt(r.amount)} ₺${r.note?' · '+r.note:''}`;
   if(L==='ot')return`${r.date?trDate(r.date)+' · ':''}${r.cihaz||''} · ${OT_TUR[r.tur]||''} · ${r.sonuc==='kaldi'?'KALDI':'geçti'}${r.no?' · döngü '+r.no:''}`;
   if(L==='iz')return`${perName(r.pid)} · ${IZ_TUR[r.kind]||''} · ${trDate(r.from)}${r.to&&r.to!==r.from?' – '+trDate(r.to):''} (${r.days} gün)`;
   if(L==='sm')return`${r.date?trDate(r.date)+' · ':''}${{in:'Giriş',out:'Kullanım',count:'Sayım'}[r.kind]||''} ${stokName(r.item)} ${qf(r.qty)}${r.lot?' · lot '+r.lot:''}${r.note?' · '+r.note:''}`;
@@ -1134,7 +1138,7 @@ function auditText(scope,p){
     if(k==='e')return`${d} · ${docName(p[3])} kazancı`;if(k==='h')return`${d} · toplam harcama`;if(k==='kk')return`${d} · günün KK toplamı`;if(k==='vg')return`${d} · vergi`;if(k==='n')return`${d} · günün notu`;
     if(k==='pos')return`${d} · ${kasaName(p[3])} POS tutarı`;if(k==='x')return`${d} · harcama kalemi${p[4]==='c'?' kategorisi':''}`;return`${d} · ${p.slice(2).join('.')}`}
   if(LED[p[0]])return`${LED[p[0]].title} kaydı (${monthName(m)})`;
-  if(p[0]==='kh')return`Kasa hareketi (${monthName(m)})`;if(p[0]==='lj')return`Laboratuvar işi`;if(p[0]==='sm')return`Stok hareketi`;if(p[0]==='ot')return'Sterilizasyon kaydı';if(p[0]==='iz')return'İzin kaydı';
+  if(p[0]==='kh')return`Kasa hareketi (${monthName(m)})`;if(p[0]==='lj')return`Laboratuvar işi`;if(p[0]==='sm')return`Stok hareketi`;if(p[0]==='ot')return'Sterilizasyon kaydı';if(p[0]==='hp')return'Hasta ödeme planı';if(p[0]==='ho')return'Hasta tahsilatı';if(p[0]==='iz')return'İzin kaydı';
   if(p[0]==='ck')return`${trDate(p[1])} · ${p[2]==='acilis'?'açılış':'kapanış'} kontrolü${(()=>{const t=ckItems(p[2]).find(x=>hash(x)===p[3]);return t?': '+t:''})()}`;
   if(p[0]==='mz')return`${trDate(p[1])} · ${perName(p[2])} ${p[3]==='in'?'giriş':p[3]==='out'?'çıkış':p[3]||'mesai'}`;
   if(p[0]==='monthly')return`Aylık hesap ${monthName(m)} · ${docName(p[1])} · ${FLD[p[2]]||p[2]}`;
@@ -1325,9 +1329,10 @@ async function loadPrices(){const s=S.settings;if(!s.scriptUrl){STK.priceErr='Fi
 ACT.stCheck=async()=>{const s=S.settings;if(!s.scriptUrl)return;await pushWatch();toast('Kontrol başlatıldı, birkaç saniye sürer');
   try{await fetch(s.scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:s.token,action:'check'})})}catch(e){}setTimeout(loadPrices,9000)};
 // Günlük stok uyarı e-postası (yönetici panelini açınca, günde bir kez)
-async function stockMail(){const s=S.settings;if(!s.scriptUrl||!s.email||s.lastStockMail===todayStr()||!stokList().length)return;
-  await loadAll();const A=withAll(()=>stokAlerts(stokCalc().R)).filter(a=>a.kind!=='fiyat');if(!A.length)return;await patchSettings({lastStockMail:todayStr()});
-  await sendMail(`[${cname()}] Stok uyarısı – ${trDate(todayStr())}`,`<h3 style="font-family:Arial">${esc(cname())} stok uyarıları</h3><ul style="font-family:Arial;font-size:14px">${A.map(a=>`<li>${esc(a.text)}</li>`).join('')}</ul><p style="font-family:Arial;font-size:12px;color:#666">Panel → Stok sayfasından sipariş listesi oluşturabilirsiniz.</p>`)}
+async function stockMail(){const s=S.settings;if(!s.scriptUrl||!s.email||s.lastStockMail===todayStr())return;
+  await loadAll();const A=withAll(()=>stokAlerts(stokCalc().R)).filter(a=>a.kind!=='fiyat'),O=overdueList();if(!A.length&&!O.length)return;await patchSettings({lastStockMail:todayStr()});
+  const ul=l=>`<ul style="font-family:Arial;font-size:14px">${l.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
+  await sendMail(`[${cname()}] Günlük uyarılar – ${trDate(todayStr())}`,`<h3 style="font-family:Arial">${esc(cname())} günlük uyarılar</h3>${A.length?'<h4 style="font-family:Arial">Stok</h4>'+ul(A.map(a=>a.text)):''}${O.length?'<h4 style="font-family:Arial">Geciken taksitler</h4>'+ul(O.map(h=>`${h.name}${h.dosya?' #'+h.dosya:''}: ${fmt(h.lateAmt)} TL, ${h.lateDays} gün gecikti${h.tel?' · '+h.tel:''}${h.sor?' · sorumlu '+perName(h.sor):''}`)):''}`)}
 function shStok(m){const r=withAll(()=>stokCalc());const rows=[[{v:(S.settings.clinicName||'')+' — Stok durumu ('+trDate(todayStr())+')',b:1}],[],H(['Ürün','Kategori','Mevcut','Birim','En az','En yakın son kullanma','Son alış fiyatı','Tedarikçi'])];
   stokList().forEach(x=>{const q=r.R[x.id]||{qty:0};rows.push([x.name,x.cat||'',q.qty,x.unit||'adet',+x.min||0,q.skt?trDate(q.skt):'',q.lastPrice||'',x.sup||''])});
   rows.push([],[{v:monthName(m)+' stok hareketleri',b:1}],H(['Tarih','İşlem','Ürün','Miktar','Lot','Son kullanma','Birim fiyat','Not','Giren']));
@@ -1448,6 +1453,79 @@ CHANGE.push(t=>{if(U.tab!=='personel')return;
   else if(t.dataset.sf==='otoklavlar'){patchSettings({otoklavlar:t.value});toast('Kaydedildi')}});
 function shSteril(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Sterilizasyon Defteri',b:1}],[],H(['Tarih','Saat','Cihaz','Tür','Sonuç','Döngü no','Sıcaklık','Süre (dk)','Not','Giren'])];
   Object.values(Mo(m).ot||{}).filter(e=>e&&e.date).sort((a,b)=>a.date.localeCompare(b.date)||(a.at||0)-(b.at||0)).forEach(e=>rows.push([trDate(e.date),e.t||'',e.cihaz||'',OT_TUR[e.tur]||'',e.sonuc==='kaldi'?'Kaldı':'Geçti',e.no||'',e.sic||'',e.sure||'',e.note||'',e.bn||'']));return{name:'Sterilizasyon',rows}}
+
+/* ================= HASTA TAKİBİ (TAKSİT VE ALACAK) ================= */
+// Planlar plan başlangıç ayının belgesinde (hp), tahsilatlar ödeme ayının belgesinde (ho) tutulur.
+const HT={q:'',f:'acik',open:null};
+const PAY_M={nakit:'Nakit',kk:'Kredi kartı',havale:'Havale / EFT'};
+function hpAll(){const P={};Object.keys(S.months).forEach(m=>{const hp=Mo(m).hp||{};for(const id in hp)if(hp[id]&&hp[id].name)P[id]={id,m,...hp[id],pays:[]}});
+  Object.keys(S.months).forEach(m=>{const ho=Mo(m).ho||{};for(const id in ho){const p=ho[id];if(p&&P[p.hid])P[p.hid].pays.push({id,m,...p})}});
+  Object.values(P).forEach(h=>{h.pays.sort((a,b)=>a.date.localeCompare(b.date));h.paid=sum(h.pays.map(p=>+p.amount||0));h.kalan=Math.max(0,(+h.toplam||0)-h.paid);
+    const up=Math.max(0,(+h.toplam||0)-sum((h.taksit||[]).map(x=>+x.amount||0)));let left=h.paid-up;const t=todayStr();h.inst=(h.taksit||[]).map((x,i)=>{const a=+x.amount||0,pay=Math.min(a,Math.max(0,left));left-=a;return{...x,i,amount:a,paid:pay,done:pay>=a-0.5,late:pay<a-0.5&&x.due<t?daysBetween(x.due,t):0}});
+    h.next=h.inst.find(x=>!x.done);h.late=h.inst.filter(x=>x.late>0);h.lateAmt=sum(h.late.map(x=>x.amount-x.paid));h.lateDays=h.late.length?Math.max(...h.late.map(x=>x.late)):0;h.closed=h.kalan<0.5});
+  return Object.values(P)}
+function hpSummary(L){const t=todayStr(),m=ym(t);return{alacak:sum(L.map(h=>h.kalan)),gecikmis:sum(L.map(h=>h.lateAmt)),gecikmisN:L.filter(h=>h.lateAmt>0).length,
+  buAyVade:sum(L.flatMap(h=>h.inst.filter(x=>ym(x.due)===m&&!x.done).map(x=>x.amount-x.paid))),buAyTahsil:sum(L.flatMap(h=>h.pays.filter(p=>ym(p.date)===m).map(p=>+p.amount||0)))}}
+function renderHasta(){const docs=S.doctors.filter(d=>d.active!==false&&d.pay!==false);
+  main.innerHTML=`<div class="kpis" id="hsKpi" style="margin-top:0"></div>
+  <div class="card" style="margin-top:14px"><div class="row between" style="margin-bottom:10px"><h2 style="margin:0">Hastalar</h2><div class="row"><input id="hsQ" placeholder="Ad, dosya no, telefon" value="${esc(HT.q)}" style="min-width:200px"><select id="hsF"><option value="acik">Borcu olanlar</option><option value="gec">Gecikenler</option><option value="kapali">Kapananlar</option><option value="hepsi">Hepsi</option></select></div></div><div class="scroll" id="hsList"><div class="muted">Yükleniyor…</div></div></div>
+  <div id="hsDetail"></div>
+  <div class="card"><h2>Yeni ödeme planı</h2><div class="row">
+    <label class="f" style="min-width:180px">Hasta adı<input id="hpName"></label><label class="f">Dosya no<input id="hpDosya" style="width:110px"></label><label class="f">Telefon<input id="hpTel" inputmode="tel" placeholder="05xx" style="width:140px"></label>
+    <label class="f">Hekim<select id="hpDoc"><option value="">—</option>${docs.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label>
+    <label class="f" style="flex:1;min-width:160px">Açıklama<input id="hpDesc" placeholder="ör. tedavi planı no, anlaşma notu"></label></div>
+   <div class="row" style="margin-top:8px">
+    <label class="f">Toplam tutar<input id="hpTop" class="num" inputmode="decimal"></label><label class="f">Bugün alınan peşinat<input id="hpPes" class="num" inputmode="decimal" placeholder="0"></label>
+    <label class="f">Peşinat ödeme şekli<select id="hpPesM">${Object.entries(PAY_M).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label>
+    <label class="f">Taksit sayısı<input id="hpN" class="num" inputmode="numeric" value="3" style="width:90px"></label><label class="f">İlk taksit<input type="date" id="hpFirst" value="${shiftDay(todayStr(),30)}"></label>
+    <label class="f">Tahsilat sorumlusu<select id="hpSor"><option value="">—</option>${perList().map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></label>
+    <button class="b p" data-act="hpAdd">Planı oluştur</button></div><div class="small muted" id="hpPrev" style="margin-top:6px"></div>
+   <div class="muted small" style="margin-top:6px">Bu sayfa sadece borç ve taksit takibi içindir. Hastadan alınan para föye de yazıldığı için buradaki tahsilatlar ciroya ikinci kez eklenmez.</div></div>`;
+  $('hsF').value=HT.f;refreshHasta();loadAll().then(a=>{for(const m in a)if(!S.months[m])S.months[m]=a[m];refreshHasta()}).catch(()=>{})}
+function refreshHasta(){const el=$('hsList');if(!el)return;const L=hpAll(),s=hpSummary(L);
+  $('hsKpi').innerHTML=[['Toplam alacak',s.alacak],['Vadesi geçmiş',s.gecikmis,s.gecikmisN?`${s.gecikmisN} hasta`:''],['Bu ay vadesi gelen',s.buAyVade],['Bu ay tahsil edilen',s.buAyTahsil]].map(([k,v,x],i)=>`<div class="kpi ${i===1&&v?'kpi-bad':''}"><div class="k">${k}</div><div class="v">${fmtc(v)}</div>${x?`<div class="small neg">${x}</div>`:''}</div>`).join('');
+  const q=HT.q.toLocaleLowerCase('tr');let R=L.filter(h=>!q||[h.name,h.dosya,h.tel].join(' ').toLocaleLowerCase('tr').includes(q));
+  R=R.filter(h=>HT.f==='hepsi'||(HT.f==='acik'&&!h.closed)||(HT.f==='kapali'&&h.closed)||(HT.f==='gec'&&h.lateAmt>0)).sort((a,b)=>(b.lateDays-a.lateDays)||((a.next||{}).due||'9').localeCompare((b.next||{}).due||'9'));
+  el.innerHTML=`<table><thead><tr><th class="l">Hasta</th><th class="l">Hekim</th><th>Toplam</th><th>Ödenen</th><th>Kalan</th><th class="l">Sıradaki taksit</th><th class="l">Sorumlu</th><th></th></tr></thead><tbody>
+   ${R.map(h=>`<tr class="${h.lateAmt>0?'late':''}"><td class="l"><b>${esc(h.name)}</b>${h.dosya?` <span class="muted small">#${esc(h.dosya)}</span>`:''}</td><td class="l">${h.docId?esc(docName(h.docId)):''}</td><td>${fmt(h.toplam)}</td><td>${fmt(h.paid)}</td><td><b>${fmt(h.kalan)}</b></td>
+    <td class="l">${h.closed?'<span class="ok-t small">kapandı</span>':h.next?`${trDate(h.next.due)} · ${fmt(h.next.amount-h.next.paid)} ₺${h.lateDays?` <span class="neg small">${h.lateDays} gün gecikti</span>`:''}`:'<span class="muted small">taksit yok</span>'}</td>
+    <td class="l small">${h.sor?esc(perName(h.sor)):''}</td><td class="l"><button class="b s ${h.closed?'':'p'}" data-act="hsOpen" data-id="${h.id}">${h.closed?'Aç':'Tahsilat / detay'}</button></td></tr>`).join('')||`<tr><td class="l muted" colspan="8">${L.length?'Bu filtreye uyan hasta yok.':'Henüz ödeme planı yok. Aşağıdan taksitli ya da borçlu hastaları ekleyin.'}</td></tr>`}</tbody></table>`;
+  if(HT.open)hsDetail(L.find(h=>h.id===HT.open))}
+INPUT.push(t=>{if(U.tab!=='hasta')return;if(t.id==='hsQ'){HT.q=t.value;refreshHasta()}if(['hpTop','hpPes','hpN','hpFirst'].includes(t.id))hpPreview()});
+CHANGE.push(t=>{if(U.tab!=='hasta')return;if(t.id==='hsF'){HT.f=t.value;refreshHasta()}if(t.id==='hpFirst')hpPreview()});
+function hpPlan(){const top=parseNum($('hpTop').value)||0,pes=parseNum($('hpPes').value)||0,n=Math.max(0,Math.floor(parseNum($('hpN').value)||0)),first=$('hpFirst').value;
+  const rest=Math.max(0,top-pes);if(!n||!rest||!first)return{top,pes,list:[]};const per=Math.floor(rest/n/10)*10,list=[];
+  for(let i=0;i<n;i++){const d=new Date(first+'T12:00:00');const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+i);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));
+    list.push({due:d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),amount:i===n-1?rest-per*(n-1):per})}return{top,pes,list}}
+function hpPreview(){const el=$('hpPrev');if(!el)return;const p=hpPlan();el.innerHTML=p.list.length?'Taksitler: '+p.list.map(x=>`${trDate(x.due)} ${fmt(x.amount)} ₺`).join(' · '):''}
+ACT.hpAdd=()=>{const name=$('hpName').value.trim();if(!name){$('hpName').focus();toast('Hasta adını yazın');return}const p=hpPlan();if(!p.top){$('hpTop').focus();toast('Toplam tutarı yazın');return}if(p.pes>p.top){toast('Peşinat toplamdan büyük olamaz');return}
+  const t=todayStr(),id='h'+uid();const h={name,dosya:$('hpDosya').value.trim(),tel:$('hpTel').value.trim(),docId:$('hpDoc').value||null,desc:$('hpDesc').value.trim(),toplam:p.top,taksit:p.list,sor:$('hpSor').value||'',start:t,...me()};
+  patchMonth(ym(t),{hp:{[id]:h},...(p.pes?{ho:{['p'+uid()]:{hid:id,hn:name,date:t,amount:p.pes,method:$('hpPesM').value,note:'Peşinat',...me()}}}:{})});
+  ['hpName','hpDosya','hpTel','hpDesc','hpTop','hpPes'].forEach(i=>$(i).value='');$('hpPrev').innerHTML='';toast(name+' için plan oluşturuldu');ALL.at=0;HT.open=id;setTimeout(refreshHasta,80)};
+ACT.hsOpen=a=>{HT.open=HT.open===a.dataset.id?null:a.dataset.id;refreshHasta();if(HT.open){const d=$('hsDetail');d&&d.scrollIntoView&&d.scrollIntoView({behavior:'smooth',block:'start'})}else $('hsDetail').innerHTML=''};
+function waLink(h){if(!h.tel)return'';let n=h.tel.replace(/\D/g,'');if(n.startsWith('0'))n='9'+n;else if(n.length===10)n='90'+n;const x=h.next;
+  const msg=`Merhaba ${h.name}, ${cname()} olarak hatırlatmak isteriz: ${x?`${trDate(x.due)} tarihli ${fmt(x.amount-x.paid)} TL tutarındaki taksitiniz`:`kalan ${fmt(h.kalan)} TL ödemeniz`} bulunmaktadır. Sağlıklı günler dileriz.`;
+  return`https://wa.me/${n}?text=${encodeURIComponent(msg)}`}
+function hsDetail(h){const el=$('hsDetail');if(!el)return;if(!h){el.innerHTML='';return}const adm=isAdmin();
+  el.innerHTML=`<div class="card hsd"><div class="row between"><h2 style="margin:0">${esc(h.name)}${h.dosya?` <span class="muted small">#${esc(h.dosya)}</span>`:''}</h2><div class="row">${h.tel?`<a class="b s" href="${waLink(h)}" target="_blank" rel="noopener">WhatsApp hatırlatma</a><a class="b s" href="tel:${esc(h.tel)}">Ara</a>`:''}<button class="b s" data-act="hsOpen" data-id="${h.id}">Kapat</button></div></div>
+   <div class="small muted" style="margin:4px 0 10px">${h.docId?'Hekim: '+esc(docName(h.docId))+' · ':''}Plan: ${trDate(h.start||h.m+'-01')}${h.desc?' · '+esc(h.desc):''}${h.sor?' · Sorumlu: '+esc(perName(h.sor)):''}</div>
+   <div class="kpis" style="margin-top:0"><div class="kpi"><div class="k">Toplam</div><div class="v">${fmtc(h.toplam)}</div></div><div class="kpi"><div class="k">Ödenen</div><div class="v">${fmtc(h.paid)}</div></div><div class="kpi ${h.lateAmt?'kpi-bad':''}"><div class="k">Kalan</div><div class="v">${fmtc(h.kalan)}</div></div></div>
+   ${h.closed?'':`<h3>Tahsilat al</h3><div class="row"><label class="f">Tarih<input type="date" id="hoDate" value="${todayStr()}"></label><label class="f">Tutar<input id="hoAmt" class="num" inputmode="decimal" value="${h.next?h.next.amount-h.next.paid:h.kalan}"></label><label class="f">Ödeme şekli<select id="hoM">${Object.entries(PAY_M).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label><label class="f" style="flex:1;min-width:140px">Not<input id="hoNote" data-enter="hoAdd"></label><button class="b p" data-act="hoAdd" data-id="${h.id}">Tahsilatı kaydet</button></div>`}
+   <div class="g2e"><div><h3>Taksitler</h3><table><thead><tr><th class="l">Vade</th><th>Tutar</th><th>Ödenen</th><th class="l">Durum</th></tr></thead><tbody>${h.inst.map(x=>`<tr class="${x.late?'late':''}"><td class="l">${trDate(x.due)}</td><td>${fmt(x.amount)}</td><td>${fmt(x.paid)}</td><td class="l small">${x.done?'<span class="ok-t">ödendi</span>':x.late?`<span class="neg">${x.late} gün gecikti</span>`:x.paid?'kısmen ödendi':'bekliyor'}</td></tr>`).join('')||'<tr><td class="l muted" colspan="4">Taksit yok, kalan tek seferde.</td></tr>'}</tbody></table></div>
+    <div><h3>Ödemeler</h3><table><thead><tr><th class="l">Tarih</th><th>Tutar</th><th class="l">Şekil</th><th class="l">Not</th><th class="l">Alan</th><th></th></tr></thead><tbody>${h.pays.map(p=>`<tr><td class="l">${trDate(p.date)}</td><td>${fmt(p.amount)}</td><td class="l small">${PAY_M[p.method]||''}</td><td class="l small">${esc(p.note||'')}</td><td class="l small muted">${esc(p.bn||'')}</td><td>${adm?`<button class="b s d" data-act="hoDel" data-id="${p.id}" data-m="${p.m}">Sil</button>`:''}</td></tr>`).join('')||'<tr><td class="l muted" colspan="6">Henüz ödeme yok.</td></tr>'}</tbody></table></div></div>
+   ${adm?`<div class="row" style="margin-top:12px"><button class="b s" data-act="hpEdit" data-id="${h.id}" data-m="${h.m}">Toplamı / telefonu düzelt</button><button class="b s d" data-act="hpDel" data-id="${h.id}" data-m="${h.m}">Planı sil</button></div>`:''}</div>`}
+ACT.hoAdd=a=>{const h=hpAll().find(x=>x.id===a.dataset.id);if(!h)return;const date=$('hoDate').value,v=parseNum($('hoAmt').value);if(!date||!v){toast('Tarih ve tutarı yazın');return}
+  if(v>h.kalan+0.5&&!confirm(`Tutar kalan borçtan (${fmt(h.kalan)} ₺) fazla. Yine de kaydedilsin mi?`))return;
+  patchMonth(ym(date),{ho:{['p'+uid()]:{hid:h.id,hn:h.name,date,amount:v,method:$('hoM').value,note:$('hoNote').value.trim(),...me()}}});ALL.at=0;toast(`${h.name}: ${fmt(v)} ₺ tahsil edildi`);setTimeout(refreshHasta,80)};
+ACT.hoDel=a=>{if(!confirm('Bu ödeme kaydı silinsin mi?'))return;patchMonth(a.dataset.m,{ho:{[a.dataset.id]:DEL}});if(S.months[a.dataset.m]&&S.months[a.dataset.m].ho)delete S.months[a.dataset.m].ho[a.dataset.id];ALL.at=0;setTimeout(refreshHasta,80)};
+ACT.hpEdit=a=>{const h=hpAll().find(x=>x.id===a.dataset.id);if(!h)return;const t=prompt('Toplam tutar',fmt(h.toplam));if(t===null)return;const tel=prompt('Telefon',h.tel||'');if(tel===null)return;const v=parseNum(t);if(!v){alert('Tutar geçersiz');return}
+  patchMonth(a.dataset.m,{hp:{[h.id]:{toplam:v,tel:tel.trim()}}});setTimeout(refreshHasta,80)};
+ACT.hpDel=a=>{const h=hpAll().find(x=>x.id===a.dataset.id);if(!h)return;if(!confirm(`${h.name} planı ve ${h.pays.length} ödeme kaydı silinsin mi?`))return;
+  h.pays.forEach(p=>{patchMonth(p.m,{ho:{[p.id]:DEL}});if(S.months[p.m]&&S.months[p.m].ho)delete S.months[p.m].ho[p.id]});patchMonth(a.dataset.m,{hp:{[h.id]:DEL}});if(S.months[a.dataset.m]&&S.months[a.dataset.m].hp)delete S.months[a.dataset.m].hp[h.id];HT.open=null;$('hsDetail').innerHTML='';ALL.at=0;setTimeout(refreshHasta,80)};
+function overdueList(){return withAll(()=>hpAll().filter(h=>h.lateAmt>0).sort((a,b)=>b.lateDays-a.lateDays))}
+function shHasta(m){const L=withAll(()=>hpAll());const rows=[[{v:(S.settings.clinicName||'')+' — Hasta alacakları ('+trDate(todayStr())+')',b:1}],[],H(['Hasta','Dosya no','Telefon','Hekim','Toplam','Ödenen','Kalan','Geciken tutar','En uzun gecikme (gün)','Sıradaki vade','Sorumlu'])];
+  L.filter(h=>!h.closed).sort((a,b)=>b.lateDays-a.lateDays).forEach(h=>rows.push([h.name,h.dosya||'',h.tel||'',h.docId?docName(h.docId):'',+h.toplam||0,h.paid,h.kalan,h.lateAmt||'',h.lateDays||'',h.next?trDate(h.next.due):'',h.sor?perName(h.sor):'']));
+  rows.push([],[{v:monthName(m)+' tahsilatları',b:1}],H(['Tarih','Hasta','Tutar','Şekil','Not','Alan']));L.flatMap(h=>h.pays.filter(p=>ym(p.date)===m).map(p=>[trDate(p.date),h.name,+p.amount||0,PAY_M[p.method]||'',p.note||'',p.bn||''])).sort().forEach(r=>rows.push(r));return{name:'Hasta Alacakları',rows}}
 
 /* ===== PAROLALI EXCEL (Office şifreleme) ===== */
 const rdU32=(a,o)=>new DataView(a.buffer,a.byteOffset,a.byteLength).getUint32(o,true);

@@ -121,7 +121,8 @@ td.in input{width:110px;padding:4px 6px;text-align:right}td.in input.w{width:160
 .chart{width:100%;height:auto;display:block}.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 4px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .hbars{display:grid;gap:5px}.hb{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:8px;align-items:center;font-size:13px}.hbk{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hbt{background:#eef1f4;border-radius:4px;height:12px;overflow:hidden}.hbt div{height:100%;border-radius:0 4px 4px 0}.hbv{font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
 .hero{margin-top:12px;padding:12px 14px;background:var(--pri2);border:1px solid #b9dcdc;border-radius:12px}.hero .k{font-size:13px;color:var(--muted)}.hero .v{font-size:28px;font-weight:800;margin:2px 0}
-.seg{display:flex;gap:4px}tr.late td{background:#fff4f2}.alist{display:grid;gap:6px}.al{display:grid;grid-template-columns:190px 1fr;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:13px}.al b{font-weight:600}.al-min,.al-skt0{background:#fff4f2;border-color:#f3c3be}.al-skt{background:#fff8e6;border-color:#f3dca1}.al-fiyat{background:#eaf6ee;border-color:#bfe3cb}@media(max-width:700px){.al{grid-template-columns:1fr;gap:2px}}.g2e{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:14px}@media(max-width:700px){.g2e{grid-template-columns:minmax(0,1fr)}}.cat-s{font-size:12px;padding:2px 4px;margin-top:3px;max-width:100%}
+.seg{display:flex;gap:4px}tr.late td{background:#fff4f2}.ptabs{flex-wrap:wrap}.cklist{display:grid;gap:4px}.ck{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px}.ck input{width:18px;height:18px;margin:0;accent-color:var(--pri)}.ck.on{background:var(--pri2);border-color:#b9dcdc}.ck.on span{color:var(--muted)}.ck em{font-style:normal;font-size:12px;color:var(--muted);white-space:nowrap}@media(max-width:700px){.ck{grid-template-columns:22px 1fr}.ck em{grid-column:2}}
+.alist{display:grid;gap:6px}.al{display:grid;grid-template-columns:190px 1fr;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:13px}.al b{font-weight:600}.al-min,.al-skt0{background:#fff4f2;border-color:#f3c3be}.al-skt{background:#fff8e6;border-color:#f3dca1}.al-fiyat{background:#eaf6ee;border-color:#bfe3cb}@media(max-width:700px){.al{grid-template-columns:1fr;gap:2px}}.g2e{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:14px}@media(max-width:700px){.g2e{grid-template-columns:minmax(0,1fr)}}.cat-s{font-size:12px;padding:2px 4px;margin-top:3px;max-width:100%}
 .hint{background:#fff8e6;border:1px solid #f3dca1;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}
 pre{background:#0f1720;color:#e6edf3;padding:12px;border-radius:8px;overflow:auto;font-size:12px}
 .toast{position:fixed;bottom:20px;right:20px;left:auto;max-width:90vw;background:#1d2733;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
@@ -432,9 +433,9 @@ function typing(){const f=document.activeElement;return!!f&&main.contains(f)&&/^
 const main=$('main');
 function wrapTables(root){root.querySelectorAll('table').forEach(t=>{if(t.closest('.scroll,.tw'))return;const w=document.createElement('div');w.className='tw';t.parentNode.insertBefore(w,t);w.appendChild(t)})}
 new MutationObserver(()=>wrapTables(main)).observe(main,{childList:true,subtree:true});
-const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['fatura','Fatura'],['lab','Teknisyen İşleri'],['labtakip','Lab Takip'],['stok','Stok'],['kokpit','Kokpit',1],['kasa','Kasalar',1],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['kayit','Değişiklik Kaydı',1],['yonetim','Yönetim',1]];
-const TGROUP={genel:'Günlük iş',hizli:'Günlük iş',kk:'Kayıtlar',avans:'Kayıtlar',iade:'Kayıtlar',fatura:'Kayıtlar',lab:'Kayıtlar',labtakip:'Kayıtlar',stok:'Kayıtlar',kokpit:'Para ve raporlar',kasa:'Para ve raporlar',aylik:'Para ve raporlar',kayit:'Yönetim',imp:'Yönetim',yonetim:'Yönetim'};
-const TDESC={genel:'Doktorların günlük kazancı, harcamalar ve kredi kartı toplamı.',hizli:'Föyün fotoğrafını Claude\'a okutup çıkan metni buraya yapıştırın.',kk:'Doktor bazında kredi kartı ve fatura kayıtları.',avans:'Doktor ve teknisyenlere verilen avanslar.',iade:'Hastalara yapılan iadeler.',fatura:'Doktor adına kesilen faturalar.',lab:'Teknisyen hakedişine yazılan işler.',labtakip:'Laboratuvara giden işler, teslim tarihleri ve gecikmeler.',stok:'Malzeme stoku, son kullanma tarihleri, sipariş listesi ve internet fiyat takibi.',kokpit:'Kliniğin ay ve yıl bazında ciro, gider ve kâr özeti.',kasa:'Nakit, POS, banka ve döviz kasalarının bakiyeleri ve hareketleri.',aylik:'Doktor ve teknisyen ödemelerinin ay sonu hesabı.',kayit:'Panelde kimin neyi ne zaman değiştirdiği.',imp:'Eski Excel dosyalarını panele aktarın.',yonetim:'Doktorlar, teknisyenler, kasalar, kullanıcılar ve yedekler.'};
+const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['fatura','Fatura'],['lab','Teknisyen İşleri'],['labtakip','Lab Takip'],['stok','Stok'],['personel','Personel'],['kokpit','Kokpit',1],['kasa','Kasalar',1],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['kayit','Değişiklik Kaydı',1],['yonetim','Yönetim',1]];
+const TGROUP={genel:'Günlük iş',hizli:'Günlük iş',kk:'Kayıtlar',avans:'Kayıtlar',iade:'Kayıtlar',fatura:'Kayıtlar',lab:'Kayıtlar',labtakip:'Klinik işleyiş',stok:'Klinik işleyiş',personel:'Klinik işleyiş',kokpit:'Para ve raporlar',kasa:'Para ve raporlar',aylik:'Para ve raporlar',kayit:'Yönetim',imp:'Yönetim',yonetim:'Yönetim'};
+const TDESC={genel:'Doktorların günlük kazancı, harcamalar ve kredi kartı toplamı.',hizli:'Föyün fotoğrafını Claude\'a okutup çıkan metni buraya yapıştırın.',kk:'Doktor bazında kredi kartı ve fatura kayıtları.',avans:'Doktor ve teknisyenlere verilen avanslar.',iade:'Hastalara yapılan iadeler.',fatura:'Doktor adına kesilen faturalar.',lab:'Teknisyen hakedişine yazılan işler.',labtakip:'Laboratuvara giden işler, teslim tarihleri ve gecikmeler.',personel:'Açılış ve kapanış kontrolleri, sterilizasyon defteri, mesai, izinler ve asistan planı.',stok:'Malzeme stoku, son kullanma tarihleri, sipariş listesi ve internet fiyat takibi.',kokpit:'Kliniğin ay ve yıl bazında ciro, gider ve kâr özeti.',kasa:'Nakit, POS, banka ve döviz kasalarının bakiyeleri ve hareketleri.',aylik:'Doktor ve teknisyen ödemelerinin ay sonu hesabı.',kayit:'Panelde kimin neyi ne zaman değiştirdiği.',imp:'Eski Excel dosyalarını panele aktarın.',yonetim:'Doktorlar, teknisyenler, kasalar, kullanıcılar ve yedekler.'};
 function buildNav(){let g='',h='';TABS.filter(t=>!t[2]||isAdmin()).forEach(([k,l])=>{const gr=TGROUP[k]||'';if(gr!==g){h+=`<div class="ng">${gr}</div>`;g=gr}h+=`<button data-tab="${k}">${l}</button>`});$('nav').innerHTML=h}
 const navOpen=o=>document.body.classList.toggle('navopen',o);
 $('menuBtn').addEventListener('click',()=>navOpen(true));$('scrim').addEventListener('click',()=>navOpen(false));
@@ -448,7 +449,7 @@ function monthBar(){return`<div class="mbar"><button class="b s" data-act="mPrev
 ACT.mPrev=()=>{U.month=shiftMonth(U.month,-1);U.edit={};render()};
 ACT.mNext=()=>{U.month=shiftMonth(U.month,1);U.edit={};render()};
 ACT.mNow=()=>{U.month=ym(todayStr());U.edit={};render()};
-const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),fatura:()=>renderLedger('fatura'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),kokpit:()=>renderKokpit(),labtakip:()=>renderLabTakip(),stok:()=>renderStok(),kayit:()=>renderAudit(),kasa:()=>renderKasa(),yonetim:()=>renderYonetim()};
+const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),fatura:()=>renderLedger('fatura'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),kokpit:()=>renderKokpit(),labtakip:()=>renderLabTakip(),stok:()=>renderStok(),personel:()=>renderPersonel(),kayit:()=>renderAudit(),kasa:()=>renderKasa(),yonetim:()=>renderYonetim()};
 function render(){
   if(!isAdmin()&&TABS.find(t=>t[0]===U.tab&&t[2]))U.tab='genel';
   syncWatch();settingsDirty=false;
@@ -467,6 +468,7 @@ function refresh(){
   if(U.tab==='kasa'&&!t)return refreshKasa();
   if(U.tab==='labtakip'&&!t)return refreshLab();
   if(U.tab==='stok'&&!t)return refreshStok();
+  if(U.tab==='personel'&&!t)return renderPersonel();
   if(U.tab==='kokpit'&&ALL.m&&!t)return drawKokpit();
   if(U.tab==='yonetim'&&!t)return renderYonetim()}
 
@@ -851,7 +853,7 @@ function ayRows(m){const docs=monthDoctors(m),cs=docs.map(d=>calcDoc(m,d));const
 function shAylik(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Doktor Ödemeleri',b:1}],[],H(AY_H),...ayRows(m)];const tc=calcTechs(m);
   rows.push([],[{v:'Teknisyen ödemeleri',b:1}],H(['Teknisyen','İş sayısı','Toplam iş','Avans','Ödenecek','Doktorlara dağılım']));tc.forEach(x=>rows.push([x.t.name,x.count,x.total,x.avans,{v:x.net,b:1},Object.keys(x.byDoc).map(k=>k+': '+fmt(x.byDoc[k])).join(' | ')]));return{name:'Aylık Hesap',rows}}
 function shVergi(m){const vl=monthVergiList(m);const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Vergiler',b:1}],[],H(['Tarih','Açıklama','Tutar'])];vl.forEach(v=>rows.push([trDate(v.date),v.d,v.a]));rows.push(B(['TOPLAM','',sum(vl.map(v=>v.a))]));return{name:'Vergiler',rows}}
-function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shKategori(m),shKasa(m),shLab(m),shStok(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
+function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shKategori(m),shKasa(m),shLab(m),shStok(m),shSteril(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
 async function withMonths(fn){const all=await store.allMonths();const keep=S.months;S.months=Object.assign({},all,keep);try{return fn(Object.keys(all).sort())}finally{S.months=keep}}
 async function allWorkbook(){return withMonths(ms=>{const g=[H(['Tarih','Doktor / Kalem','Tür','Tutar','Not','Giren'])];
   ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});if(x.h)g.push([trDate(k),'Günün toplam harcaması','Harcama (toplam)',x.h,'',''] );if(x.vg)g.push([trDate(k),'Harcamanın içindeki vergi','Vergi',x.vg,'','']);expList(x).forEach(e=>g.push([trDate(k),e.d||'—',x.h?'Harcama dökümü (toplamın içinde)':'Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
@@ -1098,10 +1100,10 @@ function shKasa(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName
   return{name:'Kasa',rows}}
 
 /* ================= DEĞİŞİKLİK KAYDI (DENETİM) ================= */
-const REC_LED=['kk','avans','iade','fatura','lab','kh','lj','sm'];
+const REC_LED=['kk','avans','iade','fatura','lab','kh','lj','sm','ot','iz'];
 const isPlain=v=>v&&typeof v==='object'&&!Array.isArray(v)&&v!==DEL;
 function getPath(o,p){for(const k of p){if(!o||typeof o!=='object')return undefined;o=o[k]}return o}
-function isRecPath(scope,p,base){if(scope==='settings')return p.length===2&&['doctors','technicians','kasalar','stok'].includes(p[0])&&getPath(base,p)===undefined;
+function isRecPath(scope,p,base){if(scope==='settings')return p.length===2&&['doctors','technicians','kasalar','stok','personel'].includes(p[0])&&getPath(base,p)===undefined;
   return(p.length===2&&REC_LED.includes(p[0]))||(p.length===4&&p[0]==='days'&&p[2]==='x')}
 function auditLeaves(scope,base,patch,path=[],out=[]){for(const k in patch){const v=patch[k],p=[...path,k];
     if(isRecPath(scope,p,base)){const old=getPath(base,p);out.push({p,old:old===undefined?null:old,neu:v===DEL?null:mergeDeep(JSON.parse(JSON.stringify(old||{})),v)})}
@@ -1110,8 +1112,10 @@ function auditLeaves(scope,base,patch,path=[],out=[]){for(const k in patch){cons
   return out}
 const LJ_ST={gonderildi:'Gönderildi',prova:'Provada',teslim:'Teslim alındı',tekrar:'Tekrar / hatalı',iptal:'İptal'};
 function recText(p,r){if(!r||typeof r!=='object')return r==null?'—':(typeof r==='number'?fmt(r):String(r));
-  const L=p[0];if(['doctors','technicians','kasalar','stok'].includes(L))return r.name||'—';if(L==='days')return`${r.d||'—'} ${fmt(r.a)} ₺${r.c?' ('+r.c+')':''}`;
+  const L=p[0];if(['doctors','technicians','kasalar','stok','personel'].includes(L))return r.name||'—';if(L==='days')return`${r.d||'—'} ${fmt(r.a)} ₺${r.c?' ('+r.c+')':''}`;
   if(L==='kh')return`${r.kind==='in'?'Giriş':r.kind==='out'?'Çıkış':'Transfer'} ${kasaName(r.kasa)}${r.to?' → '+kasaName(r.to):''} ${fmt(r.amount)}${r.note?' · '+r.note:''}`;
+  if(L==='ot')return`${r.date?trDate(r.date)+' · ':''}${r.cihaz||''} · ${OT_TUR[r.tur]||''} · ${r.sonuc==='kaldi'?'KALDI':'geçti'}${r.no?' · döngü '+r.no:''}`;
+  if(L==='iz')return`${perName(r.pid)} · ${IZ_TUR[r.kind]||''} · ${trDate(r.from)}${r.to&&r.to!==r.from?' – '+trDate(r.to):''} (${r.days} gün)`;
   if(L==='sm')return`${r.date?trDate(r.date)+' · ':''}${{in:'Giriş',out:'Kullanım',count:'Sayım'}[r.kind]||''} ${stokName(r.item)} ${qf(r.qty)}${r.lot?' · lot '+r.lot:''}${r.note?' · '+r.note:''}`;
   if(L==='lj')return`${r.hasta||'—'} · ${r.is||''} · ${techName(r.techId)}${r.status?' · '+(LJ_ST[r.status]||r.status):''}${r.fee?' · '+fmt(r.fee)+' ₺':''}`;
   return`${r.date?trDate(r.date)+' · ':''}${whoLabel(r)} ${fmt(r.amount)} ₺${r.note?' · '+r.note:''}`}
@@ -1121,7 +1125,8 @@ function auditText(scope,p){
     if(!f&&['doctors','technicians','kasalar'].includes(a))return{doctors:'Yeni doktor / başlık',technicians:'Yeni teknisyen',kasalar:'Yeni kasa'}[a];
     if(a==='doctors')return`Doktor ${docById(id)?docName(id):id} · ${FLD[f]||f||'kayıt'}`;
     if(a==='technicians')return`Teknisyen ${techById(id)?techName(id):id} · ${FLD[f]||f||'kayıt'}`;
-    if(!f&&a==='stok')return'Yeni stok ürünü';if(a==='stok')return`Stok ${stokById(id)?stokName(id):id} · ${({min:'en az',target:'hedef fiyat',url:'link',sup:'tedarikçi'})[f]||FLD[f]||f}`;
+    if(!f&&a==='stok')return'Yeni stok ürünü';if(!f&&a==='personel')return'Yeni personel';if(a==='personel')return`Personel ${perName(id)} · ${({role:'görev',izinHak:'izin hakkı'})[f]||FLD[f]||f}`;
+    if(a==='vardiya')return`Asistan planı · ${GUN[+id-1]||id} · ${docName(f)}`;if(a==='mesai')return'Mesai saati · '+(id==='start'?'başlangıç':'bitiş');if(a==='checklists')return'Kontrol listesi · '+(id==='acilis'?'açılış':'kapanış');if(a==='stok')return`Stok ${stokById(id)?stokName(id):id} · ${({min:'en az',target:'hedef fiyat',url:'link',sup:'tedarikçi'})[f]||FLD[f]||f}`;
     if(a==='kasalar')return`Kasa ${kasaById(id)?kasaName(id):id} · ${FLD[f]||f||'kayıt'}`;
     return'Ayar · '+p.join('.')}
   const m=scope;
@@ -1129,11 +1134,14 @@ function auditText(scope,p){
     if(k==='e')return`${d} · ${docName(p[3])} kazancı`;if(k==='h')return`${d} · toplam harcama`;if(k==='kk')return`${d} · günün KK toplamı`;if(k==='vg')return`${d} · vergi`;if(k==='n')return`${d} · günün notu`;
     if(k==='pos')return`${d} · ${kasaName(p[3])} POS tutarı`;if(k==='x')return`${d} · harcama kalemi${p[4]==='c'?' kategorisi':''}`;return`${d} · ${p.slice(2).join('.')}`}
   if(LED[p[0]])return`${LED[p[0]].title} kaydı (${monthName(m)})`;
-  if(p[0]==='kh')return`Kasa hareketi (${monthName(m)})`;if(p[0]==='lj')return`Laboratuvar işi`;if(p[0]==='sm')return`Stok hareketi`;
+  if(p[0]==='kh')return`Kasa hareketi (${monthName(m)})`;if(p[0]==='lj')return`Laboratuvar işi`;if(p[0]==='sm')return`Stok hareketi`;if(p[0]==='ot')return'Sterilizasyon kaydı';if(p[0]==='iz')return'İzin kaydı';
+  if(p[0]==='ck')return`${trDate(p[1])} · ${p[2]==='acilis'?'açılış':'kapanış'} kontrolü${(()=>{const t=ckItems(p[2]).find(x=>hash(x)===p[3]);return t?': '+t:''})()}`;
+  if(p[0]==='mz')return`${trDate(p[1])} · ${perName(p[2])} ${p[3]==='in'?'giriş':p[3]==='out'?'çıkış':p[3]||'mesai'}`;
   if(p[0]==='monthly')return`Aylık hesap ${monthName(m)} · ${docName(p[1])} · ${FLD[p[2]]||p[2]}`;
   return`${monthName(m)} · ${p.join('.')}`}
 function valText(p,v){if(v==null||v==='')return'—';if(typeof v==='object')return recText(p,v);if(typeof v==='boolean')return v?'evet':'hayır';if(typeof v==='number')return fmt(v);return String(v).slice(0,200)}
-function auditEntries(scope,base,patch){if(!S.uid)return[];const ls=auditLeaves(scope,base||{},patch);if(!ls.length)return[];const by={by:S.uid,bn:S.name||S.email||'',at:Date.now()};
+function auditEntries(scope,base,patch){if(!S.uid)return[];const ls=auditLeaves(scope,base||{},patch).filter(l=>!(l.p[0]==='mz'&&/By$/.test(l.p[3]||'')));
+  if(scope==='settings')ls.forEach(l=>{if(l.p[0]==='vardiya'){if(l.old)l.old=perName(l.old);if(l.neu)l.neu=perName(l.neu)}});if(!ls.length)return[];const by={by:S.uid,bn:S.name||S.email||'',at:Date.now()};
   if(ls.length>25)return[{...by,kind:'toplu',scope,text:`Toplu değişiklik: ${scope==='settings'?'ayarlar':monthName(scope)} (${ls.length} alan)`,old:'',neu:''}];
   return ls.map(l=>({...by,kind:l.old==null?'ekle':l.neu==null?'sil':'değiştir',scope,text:auditText(scope,l.p),old:l.old==null?'—':valText(l.p,l.old),neu:l.neu==null?'—':valText(l.p,l.neu)})).filter(e=>e.kind!=='değiştir'||e.old!==e.neu)}
 function withAudit(st){const log=es=>{if(!es.length||!st.addAudit)return;es.forEach(e=>st.addAudit(e).catch(()=>{}))};
@@ -1324,6 +1332,122 @@ function shStok(m){const r=withAll(()=>stokCalc());const rows=[[{v:(S.settings.c
   stokList().forEach(x=>{const q=r.R[x.id]||{qty:0};rows.push([x.name,x.cat||'',q.qty,x.unit||'adet',+x.min||0,q.skt?trDate(q.skt):'',q.lastPrice||'',x.sup||''])});
   rows.push([],[{v:monthName(m)+' stok hareketleri',b:1}],H(['Tarih','İşlem','Ürün','Miktar','Lot','Son kullanma','Birim fiyat','Not','Giren']));
   r.ms.filter(e=>ym(e.date)===m).forEach(e=>rows.push([trDate(e.date),{in:'Giriş',out:'Kullanım',count:'Sayım'}[e.kind],stokName(e.item),+e.qty||0,e.lot||'',e.skt?trDate(e.skt):'',+e.price||'',e.note||'',e.bn||'']));return{name:'Stok',rows}}
+
+/* ================= PERSONEL VE KLİNİK İŞLEYİŞ ================= */
+const CK_DEF={acilis:'Kompresör açıldı\nÜnitler ve yüzeyler dezenfekte edildi\nÜnit su hatları 2 dakika akıtıldı\nOtoklav ısıtıldı, Bowie-Dick testi yapıldı\nRöntgen cihazı açıldı ve kontrol edildi\nBekleme salonu ve tuvaletler kontrol edildi',
+  kapanis:'Kullanılan aletler sterilizasyona alındı\nOtoklav döngüsü bitti, kayıt girildi\nRöntgen cihazı kapatıldı\nÜnit aspirasyon hatları temizlendi\nKompresör kapatıldı, suyu boşaltıldı\nTıbbi atıklar ayrıldı, kutular kapatıldı\nKapılar kilitlendi, alarm kuruldu'};
+const OT_TUR={dongu:'Sterilizasyon döngüsü',bowie:'Bowie-Dick testi',bi:'Biyolojik indikatör',vakum:'Vakum (sızdırmazlık) testi'};
+const IZ_TUR={yillik:'Yıllık izin',mazeret:'Mazeret izni',rapor:'Sağlık raporu',ucretsiz:'Ücretsiz izin'};
+const GUN=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+const perList=all=>Object.entries(S.settings.personel||{}).map(([id,x])=>({id,...x})).filter(x=>x.name&&(all||x.active!==false)).sort(ordSort);
+const perById=id=>perList(1).find(x=>x.id===id);
+const perName=id=>{const x=perById(id);return x?x.name:'(silinmiş)'};
+const ckItems=k=>String((S.settings.checklists||{})[k]||CK_DEF[k]).split('\n').map(s=>s.trim()).filter(Boolean);
+const otList=()=>String(S.settings.otoklavlar||'Otoklav 1').split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
+const nowHM=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+const hm2m=s=>{const[a,b]=String(s||'').split(':');return(+a||0)*60+(+b||0)};
+function workDays(a,b){let n=0,d=a;while(d<=b){if(new Date(d+'T12:00:00').getDay()!==0)n++;d=shiftDay(d,1)}return n}
+const PT={t:'bugun'};
+function renderPersonel(){const adm=isAdmin();
+  const tabs=[['bugun','Bugün'],['steril','Sterilizasyon'],['mesai','Mesai'],['izin','İzinler'],['vardiya','Asistan eşleşmesi'],...(adm?[['ayar','Personel ve listeler']]:[])];
+  main.innerHTML=`<div class="seg ptabs">${tabs.map(([k,l])=>`<button class="b s ${PT.t===k?'p':''}" data-act="ptTab" data-v="${k}">${l}</button>`).join('')}</div><div id="ptBody" style="margin-top:12px"></div>`;
+  ({bugun:ptBugun,steril:ptSteril,mesai:ptMesai,izin:ptIzin,vardiya:ptVardiya,ayar:ptAyar}[PT.t]||ptBugun)()}
+ACT.ptTab=a=>{PT.t=a.dataset.v;renderPersonel()};
+const pb=()=>$('ptBody');
+const perOpts=(sel,empty)=>`${empty?`<option value="">${empty}</option>`:''}${perList().map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('')}`;
+const noPer=()=>perList().length?'':`<div class="hint">Personel listesi boş. ${isAdmin()?'"Personel ve listeler" sekmesinden asistan, sekreter gibi çalışanları ekleyin.':'Yöneticinizden personeli eklemesini isteyin.'}</div>`;
+/* --- Bugün --- */
+function ptBugun(){const d=todayStr(),m=ym(d),day=((Mo(m).ck||{})[d])||{},wd=new Date(d+'T12:00:00').getDay();
+  const list=k=>{const its=ckItems(k),done=day[k]||{};const n=its.filter(t=>done[hash(t)]).length;
+    return`<div class="card"><div class="row between"><h2 style="margin:0">${k==='acilis'?'Sabah açılış':'Akşam kapanış'}</h2><span class="${n===its.length?'ok-t':'muted'} small">${n} / ${its.length}</span></div>
+      <div class="cklist">${its.map(t=>{const h=hash(t),x=done[h];return`<label class="ck ${x?'on':''}"><input type="checkbox" data-ck="${k}" data-h="${h}" ${x?'checked':''}><span>${esc(t)}</span>${x?`<em>${esc(x.bn||'')} · ${esc(x.t||'')}</em>`:''}</label>`}).join('')}</div></div>`};
+  const otT=Object.values(Mo(m).ot||{}).filter(e=>e&&e.date===d);const bw=otT.some(e=>e.tur==='bowie');
+  const v=(S.settings.vardiya||{})[wd]||{};const pairs=S.doctors.filter(x=>x.active!==false&&v[x.id]).map(x=>`${esc(x.name)} · <b>${esc(perName(v[x.id]))}</b>`);
+  pb().innerHTML=`${noPer()}<div class="g2e" style="margin-top:0"><div>${list('acilis')}</div><div>${list('kapanis')}</div></div>
+   <div class="g2e" style="margin-top:0"><div class="card"><h2>Bugünkü asistan eşleşmesi</h2>${wd===0?'<div class="muted">Pazar.</div>':pairs.length?`<div class="small" style="line-height:1.9">${pairs.join('<br>')}</div>`:'<div class="muted small">Bugün için eşleşme girilmemiş. "Asistan eşleşmesi" sekmesinden haftalık plan yapılır.</div>'}</div>
+   <div class="card"><h2>Sterilizasyon bugün</h2><div class="small" style="line-height:1.9">${bw?'<span class="ok-t">✓</span> Bowie-Dick testi yapıldı':'<span class="neg">Bowie-Dick testi henüz girilmedi</span>'}<br>${otT.filter(e=>e.tur==='dongu').length} döngü kaydı${otT.some(e=>e.sonuc==='kaldi')?' · <span class="neg">başarısız test var</span>':''}</div><button class="b s" data-act="ptTab" data-v="steril" style="margin-top:8px">Kayıt gir</button></div></div>`}
+CHANGE.push(t=>{if(U.tab!=='personel'||!t.dataset.ck)return;const d=todayStr();patchMonth(ym(d),{ck:{[d]:{[t.dataset.ck]:{[t.dataset.h]:t.checked?{by:S.uid,bn:S.name||S.email,t:nowHM()}:DEL}}}});setTimeout(()=>PT.t==='bugun'&&ptBugun(),60)});
+/* --- Sterilizasyon --- */
+function ptSteril(){const m=U.month,L=Object.entries(Mo(m).ot||{}).map(([id,e])=>({id,...e})).filter(e=>e&&e.date).sort((a,b)=>b.date.localeCompare(a.date)||(b.at||0)-(a.at||0));
+  const cnt={};L.forEach(e=>{cnt[e.tur]=(cnt[e.tur]||0)+1});const fail=L.filter(e=>e.sonuc==='kaldi').length;
+  const wd=new Date().getDay(),wkStart=shiftDay(todayStr(),-((wd+6)%7));const biWeek=Object.values(Mo(ym(todayStr())).ot||{}).concat(Object.values(Mo(ym(wkStart)).ot||{})).some(e=>e&&e.tur==='bi'&&e.date>=wkStart);
+  pb().innerHTML=`<div class="card"><h2>Kayıt ekle</h2><div class="row">
+    <label class="f">Tarih<input type="date" id="otDate" value="${todayStr()}"></label>
+    <label class="f">Cihaz<select id="otCihaz">${otList().map(c=>`<option>${esc(c)}</option>`).join('')}</select></label>
+    <label class="f">Kayıt türü<select id="otTur">${Object.entries(OT_TUR).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label>
+    <label class="f">Sonuç<select id="otSonuc"><option value="gecti">Geçti / uygun</option><option value="kaldi">Kaldı / uygunsuz</option></select></label>
+    <label class="f">Döngü no<input id="otNo" style="width:90px"></label>
+    <label class="f">Sıcaklık °C<input id="otSic" class="num" style="width:90px" placeholder="134"></label>
+    <label class="f">Süre (dk)<input id="otSure" class="num" style="width:90px"></label>
+    <label class="f" style="flex:1;min-width:150px">Not<input id="otNote" placeholder="ör. indikatör lot no, yük içeriği" data-enter="otAdd"></label>
+    <button class="b p" data-act="otAdd">Kaydet</button></div>
+    <div class="muted small" style="margin-top:6px">${biWeek?'<span class="ok-t">✓</span> Bu hafta biyolojik indikatör testi girildi.':'<span class="neg">Bu hafta henüz biyolojik indikatör testi girilmedi.</span>'}</div></div>
+  <div class="card"><div class="row between" style="margin-bottom:10px"><h2 style="margin:0">Sterilizasyon defteri</h2>${monthBar()}</div>
+   <div class="small muted" style="margin-bottom:8px">${Object.entries(OT_TUR).map(([k,v])=>`${v}: <b>${cnt[k]||0}</b>`).join(' · ')}${fail?` · <span class="neg">Başarısız: ${fail}</span>`:''}</div>
+   <div class="scroll"><table><thead><tr><th class="l">Tarih</th><th class="l">Saat</th><th class="l">Cihaz</th><th class="l">Tür</th><th class="l">Sonuç</th><th class="l">Döngü</th><th>°C</th><th>Dk</th><th class="l">Not</th><th class="l">Giren</th><th></th></tr></thead><tbody>
+   ${L.map(e=>`<tr><td class="l">${trDate(e.date)}</td><td class="l small">${esc(e.t||'')}</td><td class="l">${esc(e.cihaz||'')}</td><td class="l">${OT_TUR[e.tur]||''}</td><td class="l ${e.sonuc==='kaldi'?'neg':'ok-t'}">${e.sonuc==='kaldi'?'Kaldı':'Geçti'}</td><td class="l">${esc(e.no||'')}</td><td>${e.sic||''}</td><td>${e.sure||''}</td><td class="l small">${esc(e.note||'')}</td><td class="l small muted">${esc(e.bn||'')}</td><td>${isAdmin()?`<button class="b s d" data-act="otDel" data-id="${e.id}">Sil</button>`:''}</td></tr>`).join('')||'<tr><td class="l muted" colspan="11">Bu ay kayıt yok.</td></tr>'}</tbody></table></div>
+   <div class="row" style="margin-top:8px"><button class="b s" data-act="print">Yazdır (denetim için)</button></div></div>`}
+ACT.otAdd=()=>{const date=$('otDate').value;if(!date){toast('Tarih seçin');return}const e={date,t:date===todayStr()?nowHM():'',cihaz:$('otCihaz').value,tur:$('otTur').value,sonuc:$('otSonuc').value,no:$('otNo').value.trim(),sic:parseNum($('otSic').value)||'',sure:parseNum($('otSure').value)||'',note:$('otNote').value.trim(),...me()};
+  if(e.sonuc==='kaldi'&&!confirm('Sonuç "kaldı" olarak kaydedilecek. Cihazı kullanmadan önce teknik servise haber verin. Kaydedilsin mi?'))return;
+  patchMonth(ym(date),{ot:{['o'+uid()]:e}});['otNo','otNote','otSure'].forEach(i=>$(i).value='');toast('Kaydedildi');if(ym(date)!==U.month)U.month=ym(date);setTimeout(ptSteril,60)};
+ACT.otDel=a=>{if(!confirm('Bu sterilizasyon kaydı silinsin mi?'))return;patchMonth(U.month,{ot:{[a.dataset.id]:DEL}});setTimeout(ptSteril,60)};
+/* --- Mesai --- */
+function ptMesai(){const d=todayStr(),mz=((Mo(ym(d)).mz||{})[d])||{},ms=S.settings.mesai||{},st=ms.start||'09:00',en=ms.end||'19:00';
+  const m=U.month,days=Object.entries(Mo(m).mz||{}).sort((a,b)=>a[0].localeCompare(b[0]));const sum={};
+  days.forEach(([dd,o])=>Object.entries(o||{}).forEach(([pid,x])=>{const s=sum[pid]=sum[pid]||{gun:0,gec:0,dk:0,fazla:0};if(x.in){s.gun++;if(hm2m(x.in)>hm2m(st)+10)s.gec++}if(x.in&&x.out){const w=hm2m(x.out)-hm2m(x.in);s.dk+=w;s.fazla+=Math.max(0,hm2m(x.out)-hm2m(en))}}));
+  const h=v=>`${Math.floor(v/60)} sa ${v%60} dk`;
+  pb().innerHTML=`${noPer()}<div class="card"><h2>Bugün giriş / çıkış</h2><p class="muted small">Mesai ${st} – ${en}. Girişte ve çıkışta kendi adınızın yanındaki düğmeye basın; saat otomatik yazılır.</p>
+   <div class="scroll"><table><thead><tr><th class="l">Personel</th><th class="l">Giriş</th><th class="l">Çıkış</th><th></th></tr></thead><tbody>${perList().map(p=>{const x=mz[p.id]||{};return`<tr><td class="l">${esc(p.name)}${p.role?` <span class="muted small">${esc(p.role)}</span>`:''}</td><td class="l ${x.in&&hm2m(x.in)>hm2m(st)+10?'neg':''}">${esc(x.in||'—')}</td><td class="l">${esc(x.out||'—')}</td><td class="l">${!x.in?`<button class="b s p" data-act="mzIn" data-id="${p.id}">Giriş yap</button>`:!x.out?`<button class="b s" data-act="mzOut" data-id="${p.id}">Çıkış yap</button>`:'<span class="ok-t small">tamam</span>'}${isAdmin()&&(x.in||x.out)?` <button class="b s" data-act="mzFix" data-id="${p.id}">Düzelt</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>
+  <div class="card"><div class="row between" style="margin-bottom:10px"><h2 style="margin:0">Aylık mesai özeti</h2>${monthBar()}</div><div class="scroll"><table><thead><tr><th class="l">Personel</th><th>Çalıştığı gün</th><th>Geç kalma</th><th>Toplam süre</th><th>Mesai sonrası</th></tr></thead><tbody>
+   ${perList(1).filter(p=>sum[p.id]).map(p=>{const s=sum[p.id];return`<tr><td class="l">${esc(p.name)}</td><td>${s.gun}</td><td class="${s.gec?'neg':''}">${s.gec}</td><td>${h(s.dk)}</td><td>${s.fazla?h(s.fazla):''}</td></tr>`}).join('')||'<tr><td class="l muted" colspan="5">Bu ay mesai kaydı yok.</td></tr>'}</tbody></table></div>
+   <div class="muted small" style="margin-top:6px">Geç kalma: girişin ${st}'dan 10 dakikadan fazla sonra olması. Mesai sonrası: ${en}'dan sonra çalışılan süre.</div></div>`}
+ACT.mzIn=a=>{const d=todayStr();patchMonth(ym(d),{mz:{[d]:{[a.dataset.id]:{in:nowHM(),inBy:S.name||S.email}}}});toast(perName(a.dataset.id)+' giriş: '+nowHM());setTimeout(ptMesai,60)};
+ACT.mzOut=a=>{const d=todayStr();patchMonth(ym(d),{mz:{[d]:{[a.dataset.id]:{out:nowHM(),outBy:S.name||S.email}}}});toast(perName(a.dataset.id)+' çıkış: '+nowHM());setTimeout(ptMesai,60)};
+ACT.mzFix=a=>{const d=todayStr(),x=(((Mo(ym(d)).mz||{})[d])||{})[a.dataset.id]||{};const i=prompt('Giriş saati (SS:DD)',x.in||'');if(i===null)return;const o=prompt('Çıkış saati (SS:DD, boş bırakılabilir)',x.out||'');if(o===null)return;
+  const ok=s=>!s||/^\d{1,2}:\d{2}$/.test(s.trim());if(!ok(i)||!ok(o)){alert('Saat SS:DD biçiminde olmalı, ör. 09:05');return}patchMonth(ym(d),{mz:{[d]:{[a.dataset.id]:{in:i.trim()||DEL,out:o.trim()||DEL}}}});setTimeout(ptMesai,60)};
+/* --- İzinler --- */
+function ptIzin(){const y=U.month.slice(0,4);const yrs=Object.keys(S.months).filter(m=>m.startsWith(y));
+  const all=Object.keys(S.months).flatMap(m=>Object.entries(Mo(m).iz||{}).map(([id,e])=>({id,m,...e}))).filter(e=>e&&e.from).sort((a,b)=>b.from.localeCompare(a.from));
+  const used={};all.filter(e=>e.kind==='yillik'&&e.from.startsWith(y)).forEach(e=>used[e.pid]=(used[e.pid]||0)+(+e.days||0));
+  pb().innerHTML=`${noPer()}<div class="card"><h2>İzin / rapor gir</h2><div class="row">
+    <label class="f">Personel<select id="izP">${perOpts()}</select></label>
+    <label class="f">Tür<select id="izK">${Object.entries(IZ_TUR).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label>
+    <label class="f">Başlangıç<input type="date" id="izF" value="${todayStr()}"></label><label class="f">Bitiş<input type="date" id="izT" value="${todayStr()}"></label>
+    <label class="f" style="flex:1;min-width:150px">Not<input id="izN" data-enter="izAdd"></label><button class="b p" data-act="izAdd">Kaydet</button></div>
+    <div class="muted small" style="margin-top:6px">Gün sayısı pazar günleri hariç hesaplanır.</div></div>
+  <div class="card"><h2>${y} yılı izin durumu</h2><div class="scroll"><table><thead><tr><th class="l">Personel</th><th>Yıllık hak</th><th>Kullanılan</th><th>Kalan</th></tr></thead><tbody>
+   ${perList().map(p=>{const hak=+p.izinHak||14,u=used[p.id]||0;return`<tr><td class="l">${esc(p.name)}</td><td>${hak}</td><td>${u}</td><td class="${hak-u<0?'neg':''}"><b>${hak-u}</b></td></tr>`}).join('')||'<tr><td class="l muted" colspan="4">Personel yok.</td></tr>'}</tbody></table></div></div>
+  <div class="card"><h2>İzin kayıtları</h2><div class="scroll"><table><thead><tr><th class="l">Personel</th><th class="l">Tür</th><th class="l">Tarih</th><th>Gün</th><th class="l">Not</th><th class="l">Giren</th><th></th></tr></thead><tbody>
+   ${all.slice(0,200).map(e=>`<tr><td class="l">${esc(perName(e.pid))}</td><td class="l">${IZ_TUR[e.kind]||''}</td><td class="l">${trDate(e.from)}${e.to!==e.from?' – '+trDate(e.to):''}</td><td>${e.days}</td><td class="l small">${esc(e.note||'')}</td><td class="l small muted">${esc(e.bn||'')}</td><td>${isAdmin()?`<button class="b s d" data-act="izDel" data-id="${e.id}" data-m="${e.m}">Sil</button>`:''}</td></tr>`).join('')||'<tr><td class="l muted" colspan="7">Kayıt yok.</td></tr>'}</tbody></table></div><div class="muted small" style="margin-top:6px">Yüklü aylardaki kayıtlar gösteriliyor.</div></div>`;
+  loadAll().then(a=>{let ch=false;for(const m in a)if(!S.months[m]&&(a[m].iz)){S.months[m]=a[m];ch=true}if(ch&&PT.t==='izin'&&U.tab==='personel')ptIzin()}).catch(()=>{})}
+ACT.izAdd=()=>{const pid=$('izP').value,from=$('izF').value,to=$('izT').value;if(!pid){toast('Personel seçin');return}if(!from||!to||to<from){toast('Tarihleri kontrol edin');return}
+  const e={pid,kind:$('izK').value,from,to,days:workDays(from,to),note:$('izN').value.trim(),...me()};patchMonth(ym(from),{iz:{['i'+uid()]:e}});$('izN').value='';toast(`${perName(pid)}: ${e.days} gün kaydedildi`);setTimeout(ptIzin,60)};
+ACT.izDel=a=>{if(!confirm('Bu izin kaydı silinsin mi?'))return;patchMonth(a.dataset.m,{iz:{[a.dataset.id]:DEL}});if(S.months[a.dataset.m]&&S.months[a.dataset.m].iz)delete S.months[a.dataset.m].iz[a.dataset.id];setTimeout(ptIzin,60)};
+/* --- Asistan eşleşmesi --- */
+function ptVardiya(){const v=S.settings.vardiya||{},adm=isAdmin(),docs=S.doctors.filter(d=>d.active!==false&&d.pay!==false);
+  pb().innerHTML=`${noPer()}<div class="card"><h2>Haftalık asistan planı</h2><p class="muted small">Hangi gün hangi hekimin yanında hangi asistan çalışıyor. ${adm?'Değişiklikler hemen kaydedilir.':'Planı yönetici düzenler.'}</p>
+   <div class="scroll"><table class="sticky1"><thead><tr><th class="l">Hekim</th>${GUN.map(g=>`<th class="l">${g}</th>`).join('')}</tr></thead><tbody>
+   ${docs.map(d=>`<tr><td class="l">${esc(d.name)}</td>${GUN.map((g,i)=>{const w=i+1,cur=(v[w]||{})[d.id]||'';return`<td class="l">${adm?`<select data-vd="${w}" data-doc="${d.id}" class="cat-s">${perOpts(cur,'—')}</select>`:esc(cur?perName(cur):'')}</td>`}).join('')}</tr>`).join('')||'<tr><td class="l muted" colspan="7">Hekim yok.</td></tr>'}</tbody></table></div></div>`}
+CHANGE.push(t=>{if(U.tab!=='personel'||!t.dataset.vd)return;patchSettings({vardiya:{[t.dataset.vd]:{[t.dataset.doc]:t.value||DEL}}});toast('Kaydedildi')});
+/* --- Ayarlar (yönetici) --- */
+function ptAyar(){const s=S.settings,ms=s.mesai||{};
+  pb().innerHTML=`<div class="card"><h2>Personel</h2><div class="scroll"><table><thead><tr><th class="l">Ad</th><th class="l">Görev</th><th>Yıllık izin hakkı (gün)</th><th></th></tr></thead><tbody>
+   ${perList().map(p=>`<tr><td class="l in"><input class="w" data-per="${p.id}" data-pf="name" value="${esc(p.name)}"></td><td class="l in"><input class="w" data-per="${p.id}" data-pf="role" value="${esc(p.role||'')}" placeholder="ör. asistan"></td><td class="in"><input data-per="${p.id}" data-pf="izinHak" value="${p.izinHak||14}" style="width:70px"></td><td><button class="b s d" data-act="perOff" data-id="${p.id}">İşten çıkar</button></td></tr>`).join('')||'<tr><td class="l muted" colspan="4">Henüz personel yok.</td></tr>'}</tbody></table></div>
+   <h3>Personel ekle</h3><div class="row"><label class="f">Ad<input id="npName" data-enter="perAdd"></label><label class="f">Görev<input id="npRole" placeholder="asistan, sekreter…"></label><label class="f">Yıllık izin hakkı<input id="npHak" class="num" value="14" style="width:90px"></label><button class="b p" data-act="perAdd">Ekle</button></div>
+   <div class="muted small" style="margin-top:6px">Hekimler burada değil, Yönetim → Doktorlar bölümünde. Buradaki liste mesai, izin ve asistan eşleşmesi içindir.</div></div>
+  <div class="card"><h2>Mesai saatleri</h2><div class="row"><label class="f">Başlangıç<input type="time" data-ms="start" value="${ms.start||'09:00'}"></label><label class="f">Bitiş<input type="time" data-ms="end" value="${ms.end||'19:00'}"></label></div></div>
+  <div class="g2e" style="margin-top:0"><div class="card"><h2>Açılış kontrol listesi</h2><p class="muted small">Her satır bir madde.</p><textarea data-sf="checklists.acilis" rows="8" style="width:100%">${esc((s.checklists||{}).acilis||CK_DEF.acilis)}</textarea></div>
+   <div class="card"><h2>Kapanış kontrol listesi</h2><p class="muted small">Her satır bir madde.</p><textarea data-sf="checklists.kapanis" rows="8" style="width:100%">${esc((s.checklists||{}).kapanis||CK_DEF.kapanis)}</textarea></div></div>
+  <div class="card"><h2>Sterilizasyon cihazları</h2><p class="muted small">Virgülle ayırın.</p><input data-sf="otoklavlar" value="${esc(s.otoklavlar||'Otoklav 1')}" style="width:100%"></div>`}
+ACT.perAdd=()=>{const n=$('npName').value.trim();if(!n){$('npName').focus();return}patchSettings({personel:{['h'+uid()]:{name:n,role:$('npRole').value.trim(),izinHak:parseNum($('npHak').value)||14,active:true,order:perList(1).length}}});$('npName').value='';$('npRole').value='';toast('Eklendi');setTimeout(()=>PT.t==='ayar'&&ptAyar(),300)};
+ACT.perOff=a=>{if(!confirm(perName(a.dataset.id)+' listeden çıkarılsın mı? Geçmiş kayıtları silinmez.'))return;patchSettings({personel:{[a.dataset.id]:{active:false}}});setTimeout(()=>PT.t==='ayar'&&ptAyar(),300)};
+CHANGE.push(t=>{if(U.tab!=='personel')return;
+  if(t.dataset.per){const f=t.dataset.pf;let v=t.value.trim();if(f==='izinHak')v=parseNum(v)||0;if(f==='name'&&!v)return;patchSettings({personel:{[t.dataset.per]:{[f]:v}}});toast('Kaydedildi')}
+  else if(t.dataset.ms){patchSettings({mesai:{[t.dataset.ms]:t.value}});toast('Kaydedildi')}
+  else if(t.dataset.sf&&t.dataset.sf.includes('.')){const[a,b]=t.dataset.sf.split('.');patchSettings({[a]:{[b]:t.value}});toast('Kaydedildi')}
+  else if(t.dataset.sf==='otoklavlar'){patchSettings({otoklavlar:t.value});toast('Kaydedildi')}});
+function shSteril(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Sterilizasyon Defteri',b:1}],[],H(['Tarih','Saat','Cihaz','Tür','Sonuç','Döngü no','Sıcaklık','Süre (dk)','Not','Giren'])];
+  Object.values(Mo(m).ot||{}).filter(e=>e&&e.date).sort((a,b)=>a.date.localeCompare(b.date)||(a.at||0)-(b.at||0)).forEach(e=>rows.push([trDate(e.date),e.t||'',e.cihaz||'',OT_TUR[e.tur]||'',e.sonuc==='kaldi'?'Kaldı':'Geçti',e.no||'',e.sic||'',e.sure||'',e.note||'',e.bn||'']));return{name:'Sterilizasyon',rows}}
 
 /* ===== PAROLALI EXCEL (Office şifreleme) ===== */
 const rdU32=(a,o)=>new DataView(a.buffer,a.byteOffset,a.byteLength).getUint32(o,true);

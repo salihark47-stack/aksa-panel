@@ -121,7 +121,7 @@ td.in input{width:110px;padding:4px 6px;text-align:right}td.in input.w{width:160
 .chart{width:100%;height:auto;display:block}.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 4px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .hbars{display:grid;gap:5px}.hb{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:8px;align-items:center;font-size:13px}.hbk{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hbt{background:#eef1f4;border-radius:4px;height:12px;overflow:hidden}.hbt div{height:100%;border-radius:0 4px 4px 0}.hbv{font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
 .hero{margin-top:12px;padding:12px 14px;background:var(--pri2);border:1px solid #b9dcdc;border-radius:12px}.hero .k{font-size:13px;color:var(--muted)}.hero .v{font-size:28px;font-weight:800;margin:2px 0}
-.seg{display:flex;gap:4px}tr.late td{background:#fff4f2}.g2e{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:14px}@media(max-width:700px){.g2e{grid-template-columns:minmax(0,1fr)}}.cat-s{font-size:12px;padding:2px 4px;margin-top:3px;max-width:100%}
+.seg{display:flex;gap:4px}tr.late td{background:#fff4f2}.alist{display:grid;gap:6px}.al{display:grid;grid-template-columns:190px 1fr;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:13px}.al b{font-weight:600}.al-min,.al-skt0{background:#fff4f2;border-color:#f3c3be}.al-skt{background:#fff8e6;border-color:#f3dca1}.al-fiyat{background:#eaf6ee;border-color:#bfe3cb}@media(max-width:700px){.al{grid-template-columns:1fr;gap:2px}}.g2e{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:14px}@media(max-width:700px){.g2e{grid-template-columns:minmax(0,1fr)}}.cat-s{font-size:12px;padding:2px 4px;margin-top:3px;max-width:100%}
 .hint{background:#fff8e6;border:1px solid #f3dca1;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}
 pre{background:#0f1720;color:#e6edf3;padding:12px;border-radius:8px;overflow:auto;font-size:12px}
 .toast{position:fixed;bottom:20px;right:20px;left:auto;max-width:90vw;background:#1d2733;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
@@ -432,9 +432,9 @@ function typing(){const f=document.activeElement;return!!f&&main.contains(f)&&/^
 const main=$('main');
 function wrapTables(root){root.querySelectorAll('table').forEach(t=>{if(t.closest('.scroll,.tw'))return;const w=document.createElement('div');w.className='tw';t.parentNode.insertBefore(w,t);w.appendChild(t)})}
 new MutationObserver(()=>wrapTables(main)).observe(main,{childList:true,subtree:true});
-const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['fatura','Fatura'],['lab','Teknisyen İşleri'],['labtakip','Lab Takip'],['kokpit','Kokpit',1],['kasa','Kasalar',1],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['kayit','Değişiklik Kaydı',1],['yonetim','Yönetim',1]];
-const TGROUP={genel:'Günlük iş',hizli:'Günlük iş',kk:'Kayıtlar',avans:'Kayıtlar',iade:'Kayıtlar',fatura:'Kayıtlar',lab:'Kayıtlar',labtakip:'Kayıtlar',kokpit:'Para ve raporlar',kasa:'Para ve raporlar',aylik:'Para ve raporlar',kayit:'Yönetim',imp:'Yönetim',yonetim:'Yönetim'};
-const TDESC={genel:'Doktorların günlük kazancı, harcamalar ve kredi kartı toplamı.',hizli:'Föyün fotoğrafını Claude\'a okutup çıkan metni buraya yapıştırın.',kk:'Doktor bazında kredi kartı ve fatura kayıtları.',avans:'Doktor ve teknisyenlere verilen avanslar.',iade:'Hastalara yapılan iadeler.',fatura:'Doktor adına kesilen faturalar.',lab:'Teknisyen hakedişine yazılan işler.',labtakip:'Laboratuvara giden işler, teslim tarihleri ve gecikmeler.',kokpit:'Kliniğin ay ve yıl bazında ciro, gider ve kâr özeti.',kasa:'Nakit, POS, banka ve döviz kasalarının bakiyeleri ve hareketleri.',aylik:'Doktor ve teknisyen ödemelerinin ay sonu hesabı.',kayit:'Panelde kimin neyi ne zaman değiştirdiği.',imp:'Eski Excel dosyalarını panele aktarın.',yonetim:'Doktorlar, teknisyenler, kasalar, kullanıcılar ve yedekler.'};
+const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['fatura','Fatura'],['lab','Teknisyen İşleri'],['labtakip','Lab Takip'],['stok','Stok'],['kokpit','Kokpit',1],['kasa','Kasalar',1],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['kayit','Değişiklik Kaydı',1],['yonetim','Yönetim',1]];
+const TGROUP={genel:'Günlük iş',hizli:'Günlük iş',kk:'Kayıtlar',avans:'Kayıtlar',iade:'Kayıtlar',fatura:'Kayıtlar',lab:'Kayıtlar',labtakip:'Kayıtlar',stok:'Kayıtlar',kokpit:'Para ve raporlar',kasa:'Para ve raporlar',aylik:'Para ve raporlar',kayit:'Yönetim',imp:'Yönetim',yonetim:'Yönetim'};
+const TDESC={genel:'Doktorların günlük kazancı, harcamalar ve kredi kartı toplamı.',hizli:'Föyün fotoğrafını Claude\'a okutup çıkan metni buraya yapıştırın.',kk:'Doktor bazında kredi kartı ve fatura kayıtları.',avans:'Doktor ve teknisyenlere verilen avanslar.',iade:'Hastalara yapılan iadeler.',fatura:'Doktor adına kesilen faturalar.',lab:'Teknisyen hakedişine yazılan işler.',labtakip:'Laboratuvara giden işler, teslim tarihleri ve gecikmeler.',stok:'Malzeme stoku, son kullanma tarihleri, sipariş listesi ve internet fiyat takibi.',kokpit:'Kliniğin ay ve yıl bazında ciro, gider ve kâr özeti.',kasa:'Nakit, POS, banka ve döviz kasalarının bakiyeleri ve hareketleri.',aylik:'Doktor ve teknisyen ödemelerinin ay sonu hesabı.',kayit:'Panelde kimin neyi ne zaman değiştirdiği.',imp:'Eski Excel dosyalarını panele aktarın.',yonetim:'Doktorlar, teknisyenler, kasalar, kullanıcılar ve yedekler.'};
 function buildNav(){let g='',h='';TABS.filter(t=>!t[2]||isAdmin()).forEach(([k,l])=>{const gr=TGROUP[k]||'';if(gr!==g){h+=`<div class="ng">${gr}</div>`;g=gr}h+=`<button data-tab="${k}">${l}</button>`});$('nav').innerHTML=h}
 const navOpen=o=>document.body.classList.toggle('navopen',o);
 $('menuBtn').addEventListener('click',()=>navOpen(true));$('scrim').addEventListener('click',()=>navOpen(false));
@@ -448,7 +448,7 @@ function monthBar(){return`<div class="mbar"><button class="b s" data-act="mPrev
 ACT.mPrev=()=>{U.month=shiftMonth(U.month,-1);U.edit={};render()};
 ACT.mNext=()=>{U.month=shiftMonth(U.month,1);U.edit={};render()};
 ACT.mNow=()=>{U.month=ym(todayStr());U.edit={};render()};
-const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),fatura:()=>renderLedger('fatura'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),kokpit:()=>renderKokpit(),labtakip:()=>renderLabTakip(),kayit:()=>renderAudit(),kasa:()=>renderKasa(),yonetim:()=>renderYonetim()};
+const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),fatura:()=>renderLedger('fatura'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),kokpit:()=>renderKokpit(),labtakip:()=>renderLabTakip(),stok:()=>renderStok(),kayit:()=>renderAudit(),kasa:()=>renderKasa(),yonetim:()=>renderYonetim()};
 function render(){
   if(!isAdmin()&&TABS.find(t=>t[0]===U.tab&&t[2]))U.tab='genel';
   syncWatch();settingsDirty=false;
@@ -466,6 +466,7 @@ function refresh(){
   if(U.tab==='aylik')return t?updateAylik():renderAylik();
   if(U.tab==='kasa'&&!t)return refreshKasa();
   if(U.tab==='labtakip'&&!t)return refreshLab();
+  if(U.tab==='stok'&&!t)return refreshStok();
   if(U.tab==='kokpit'&&ALL.m&&!t)return drawKokpit();
   if(U.tab==='yonetim'&&!t)return renderYonetim()}
 
@@ -634,21 +635,91 @@ ACT.print=()=>window.print();
 /* ================= YÖNETİM (yönetici) ================= */
 function listFromJson(o){const doctors={},technicians={};(o.doctors||[]).forEach(([name,pay,rate,fat,imp,banka,sig],i)=>{doctors[uid()]={name,pay,rate,kkOn:pay,kkRate:'',fatura:!!fat,implant:!!imp,implantUnit:imp?4500:0,banka,sigorta:sig,active:true,order:i}});
   (o.technicians||[]).forEach((n,i)=>{technicians[uid()]={name:n,active:true,order:i}});return{doctors,technicians}}
-function scriptCode(){return`// Klinik Hesap Paneli - e-posta gönderici (Google Apps Script)
+function scriptCode(){return`// Klinik Hesap Paneli - e-posta gönderici ve fiyat takibi (Google Apps Script)
 var TOKEN = '${S.settings.token}';
+
+function out(s) { return ContentService.createTextOutput(s); }
 
 function doPost(e) {
   var d = JSON.parse(e.postData.contents);
-  if (d.token !== TOKEN) return ContentService.createTextOutput('yetkisiz');
+  if (d.token !== TOKEN) return out('yetkisiz');
+  var P = PropertiesService.getScriptProperties();
+  if (d.action === 'watch') { P.setProperty('watch', JSON.stringify({ to: d.to, clinic: d.clinic, items: d.items || [] })); return out('ok'); }
+  if (d.action === 'check') { fiyatKontrol(); return out('ok'); }
   var ekler = (d.attachments || []).map(function (a) {
     return Utilities.newBlob(Utilities.base64Decode(a.base64), a.mimeType, a.name);
   });
   MailApp.sendEmail({ to: d.to, subject: d.subject, htmlBody: d.html, attachments: ekler });
-  return ContentService.createTextOutput('ok');
+  return out('ok');
 }
 
-// İlk kurulumda bu fonksiyonu bir kez çalıştırıp izin verin
-function izinVer() { MailApp.getRemainingDailyQuota(); }`}
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+  if (p.token !== TOKEN) return out('yetkisiz');
+  var res = PropertiesService.getScriptProperties().getProperty('results') || '{}';
+  return ContentService.createTextOutput(JSON.stringify({ results: JSON.parse(res) })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function sayi(s) {
+  s = String(s).replace(/[^\\d.,]/g, '');
+  if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) {
+    s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  } else if (s.indexOf(',') >= 0) {
+    s = /,\\d{1,2}$/.test(s) ? s.replace(',', '.') : s.replace(/,/g, '');
+  } else if (/\\.\\d{3}$/.test(s)) { s = s.replace(/\\./g, ''); }
+  var v = parseFloat(s);
+  return isNaN(v) ? null : v;
+}
+
+function fiyatBul(h) {
+  var pats = [
+    /"price"\\s*:\\s*"?([\\d.,]+)/i,
+    /itemprop=["']price["'][^>]*content=["']([\\d.,]+)/i,
+    /content=["']([\\d.,]+)["'][^>]*itemprop=["']price["']/i,
+    /property=["'](?:product|og):price:amount["'][^>]*content=["']([\\d.,]+)/i,
+    /"(?:sellingPrice|discountedPrice|salePrice)"\\s*:\\s*"?([\\d.,]+)/i
+  ];
+  for (var i = 0; i < pats.length; i++) {
+    var m = h.match(pats[i]);
+    if (m) { var v = sayi(m[1]); if (v && v > 0) return v; }
+  }
+  return null;
+}
+
+function fiyatKontrol() {
+  var P = PropertiesService.getScriptProperties();
+  var w = JSON.parse(P.getProperty('watch') || '{}');
+  var res = JSON.parse(P.getProperty('results') || '{}');
+  var dus = [];
+  (w.items || []).forEach(function (it) {
+    var r = { at: Date.now() };
+    try {
+      var resp = UrlFetchApp.fetch(it.url, { muteHttpExceptions: true, followRedirects: true,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36', 'Accept-Language': 'tr-TR,tr;q=0.9' } });
+      var code = resp.getResponseCode();
+      if (code >= 400) { r.ok = false; r.err = 'Site ' + code + ' hatası verdi'; }
+      else { var p = fiyatBul(resp.getContentText()); if (p == null) { r.ok = false; r.err = 'Fiyat sayfada bulunamadı'; } else { r.ok = true; r.price = p; } }
+    } catch (err) { r.ok = false; r.err = String(err).slice(0, 120); }
+    var eski = res[it.id] || {};
+    r.notified = eski.notified || 0;
+    if (r.ok && it.target && r.price <= it.target && (!eski.notified || r.price < eski.notified)) {
+      dus.push(it.name + ': ' + r.price + ' TL (hedef ' + it.target + ' TL)\\n' + it.url); r.notified = r.price;
+    }
+    if (r.ok && it.target && r.price > it.target) r.notified = 0;
+    res[it.id] = r;
+  });
+  P.setProperty('results', JSON.stringify(res));
+  if (dus.length && w.to) MailApp.sendEmail({ to: w.to, subject: '[' + (w.clinic || 'Klinik') + '] Fiyat düştü',
+    body: 'Takip ettiğiniz ürünlerde fiyat hedefin altına indi:\\n\\n' + dus.join('\\n\\n') });
+}
+
+// Kurulumda ve kod her güncellendiğinde bu fonksiyonu bir kez çalıştırıp izin verin
+function izinVer() {
+  MailApp.getRemainingDailyQuota();
+  UrlFetchApp.fetch('https://www.google.com');
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'fiyatKontrol') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('fiyatKontrol').timeBased().everyHours(12).create();
+}`}
 function renderYonetim(){
   const s=S.settings;if(!s.token){patchSettings({token:uid()+uid()})}
   const act=S.doctors.filter(d=>d.active!==false);
@@ -722,7 +793,7 @@ function renderYonetim(){
     <p class="muted small">Veriler zaten bulutta saklanıyor; bu e-posta ek bir güvencedir. Bir yönetici paneli o gün ilk açtığında gönderilir.</p>
     <details><summary style="cursor:pointer;font-weight:600">Kurulum adımları ve kod</summary><ol class="small">
       <li>script.google.com → Yeni proje → aşağıdaki kodu yapıştırıp kaydedin.</li><li>Üstten <b>izinVer</b>'i seçip Çalıştır, izinleri onaylayın.</li>
-      <li>Dağıt → Yeni dağıtım → Web uygulaması; yürüten: Ben; erişim: Herkes → Dağıt.</li><li>/exec ile biten adresi yukarıya yapıştırın, test e-postası gönderin.</li></ol>
+      <li>Dağıt → Yeni dağıtım → Web uygulaması; yürüten: Ben; erişim: Herkes → Dağıt.</li><li>/exec ile biten adresi yukarıya yapıştırın, test e-postası gönderin.</li></ol><div class="hint"><b>Betiği daha önce kurduysanız</b> (fiyat takibi için güncelleme): script.google.com'da projenizi açın → eski kodu silip aşağıdaki yeni kodu yapıştırın → kaydedin → <b>izinVer</b>'i bir kez çalıştırıp yeni izinleri onaylayın → Dağıt → Dağıtımları yönet → kalem simgesi → Sürüm: <b>Yeni sürüm</b> → Dağıt. Adres değişmez.</div>
       <button class="b s" data-act="copyScript">Kodu kopyala</button><pre>${esc(scriptCode())}</pre></details></div>
 
   <div class="card danger"><h2>Verileri sil</h2>
@@ -780,7 +851,7 @@ function ayRows(m){const docs=monthDoctors(m),cs=docs.map(d=>calcDoc(m,d));const
 function shAylik(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Doktor Ödemeleri',b:1}],[],H(AY_H),...ayRows(m)];const tc=calcTechs(m);
   rows.push([],[{v:'Teknisyen ödemeleri',b:1}],H(['Teknisyen','İş sayısı','Toplam iş','Avans','Ödenecek','Doktorlara dağılım']));tc.forEach(x=>rows.push([x.t.name,x.count,x.total,x.avans,{v:x.net,b:1},Object.keys(x.byDoc).map(k=>k+': '+fmt(x.byDoc[k])).join(' | ')]));return{name:'Aylık Hesap',rows}}
 function shVergi(m){const vl=monthVergiList(m);const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Vergiler',b:1}],[],H(['Tarih','Açıklama','Tutar'])];vl.forEach(v=>rows.push([trDate(v.date),v.d,v.a]));rows.push(B(['TOPLAM','',sum(vl.map(v=>v.a))]));return{name:'Vergiler',rows}}
-function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shKategori(m),shKasa(m),shLab(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
+function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shKategori(m),shKasa(m),shLab(m),shStok(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
 async function withMonths(fn){const all=await store.allMonths();const keep=S.months;S.months=Object.assign({},all,keep);try{return fn(Object.keys(all).sort())}finally{S.months=keep}}
 async function allWorkbook(){return withMonths(ms=>{const g=[H(['Tarih','Doktor / Kalem','Tür','Tutar','Not','Giren'])];
   ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});if(x.h)g.push([trDate(k),'Günün toplam harcaması','Harcama (toplam)',x.h,'',''] );if(x.vg)g.push([trDate(k),'Harcamanın içindeki vergi','Vergi',x.vg,'','']);expList(x).forEach(e=>g.push([trDate(k),e.d||'—',x.h?'Harcama dökümü (toplamın içinde)':'Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
@@ -840,7 +911,8 @@ ACT.mailMonth=async()=>{if(!mailReady())return;try{await sendMonthReport(U.month
 let autoBusy=false;
 async function autoTasks(){if(autoBusy||!isAdmin())return;const s=S.settings;if(!s.scriptUrl||!s.email)return;autoBusy=true;
   try{const t=todayStr();if(s.autoDaily&&s.lastDailyBackup!==t){await patchSettings({lastDailyBackup:t});await sendBackupMail('Günlük otomatik yedek')}
-    const prev=shiftMonth(ym(t),-1);if(s.autoMonthly&&(s.lastMonthlyReport||'')<prev){const d=await store.getMonth(prev);if(d){await patchSettings({lastMonthlyReport:prev});S.months[prev]=S.months[prev]||d;await sendMonthReport(prev)}}}catch(e){console.error(e)}finally{autoBusy=false}}
+    const prev=shiftMonth(ym(t),-1);if(s.autoMonthly&&(s.lastMonthlyReport||'')<prev){const d=await store.getMonth(prev);if(d){await patchSettings({lastMonthlyReport:prev});S.months[prev]=S.months[prev]||d;await sendMonthReport(prev)}}
+    await stockMail()}catch(e){console.error(e)}finally{autoBusy=false}}
 
 ACT.purge=async a=>{const kind=a.dataset.kind,id=a.dataset.id,list=kind==='doctors'?S.doctors:S.technicians,x=list.find(y=>y.id===id);if(!x)return;
   try{const all=await store.allMonths();const used=kind==='doctors'?Object.values(all).some(m=>Object.values(m.days||{}).some(d=>d&&d.e&&+d.e[id])||['kk','avans','iade','lab','fatura'].some(t=>Object.values(m[t]||{}).some(e=>e&&e.docId===id))||!!(m.monthly||{})[id]):Object.values(all).some(m=>['avans','lab'].some(t=>Object.values(m[t]||{}).some(e=>e&&e.techId===id)));
@@ -1026,10 +1098,10 @@ function shKasa(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName
   return{name:'Kasa',rows}}
 
 /* ================= DEĞİŞİKLİK KAYDI (DENETİM) ================= */
-const REC_LED=['kk','avans','iade','fatura','lab','kh','lj'];
+const REC_LED=['kk','avans','iade','fatura','lab','kh','lj','sm'];
 const isPlain=v=>v&&typeof v==='object'&&!Array.isArray(v)&&v!==DEL;
 function getPath(o,p){for(const k of p){if(!o||typeof o!=='object')return undefined;o=o[k]}return o}
-function isRecPath(scope,p,base){if(scope==='settings')return p.length===2&&['doctors','technicians','kasalar'].includes(p[0])&&getPath(base,p)===undefined;
+function isRecPath(scope,p,base){if(scope==='settings')return p.length===2&&['doctors','technicians','kasalar','stok'].includes(p[0])&&getPath(base,p)===undefined;
   return(p.length===2&&REC_LED.includes(p[0]))||(p.length===4&&p[0]==='days'&&p[2]==='x')}
 function auditLeaves(scope,base,patch,path=[],out=[]){for(const k in patch){const v=patch[k],p=[...path,k];
     if(isRecPath(scope,p,base)){const old=getPath(base,p);out.push({p,old:old===undefined?null:old,neu:v===DEL?null:mergeDeep(JSON.parse(JSON.stringify(old||{})),v)})}
@@ -1038,8 +1110,9 @@ function auditLeaves(scope,base,patch,path=[],out=[]){for(const k in patch){cons
   return out}
 const LJ_ST={gonderildi:'Gönderildi',prova:'Provada',teslim:'Teslim alındı',tekrar:'Tekrar / hatalı',iptal:'İptal'};
 function recText(p,r){if(!r||typeof r!=='object')return r==null?'—':(typeof r==='number'?fmt(r):String(r));
-  const L=p[0];if(['doctors','technicians','kasalar'].includes(L))return r.name||'—';if(L==='days')return`${r.d||'—'} ${fmt(r.a)} ₺${r.c?' ('+r.c+')':''}`;
+  const L=p[0];if(['doctors','technicians','kasalar','stok'].includes(L))return r.name||'—';if(L==='days')return`${r.d||'—'} ${fmt(r.a)} ₺${r.c?' ('+r.c+')':''}`;
   if(L==='kh')return`${r.kind==='in'?'Giriş':r.kind==='out'?'Çıkış':'Transfer'} ${kasaName(r.kasa)}${r.to?' → '+kasaName(r.to):''} ${fmt(r.amount)}${r.note?' · '+r.note:''}`;
+  if(L==='sm')return`${r.date?trDate(r.date)+' · ':''}${{in:'Giriş',out:'Kullanım',count:'Sayım'}[r.kind]||''} ${stokName(r.item)} ${qf(r.qty)}${r.lot?' · lot '+r.lot:''}${r.note?' · '+r.note:''}`;
   if(L==='lj')return`${r.hasta||'—'} · ${r.is||''} · ${techName(r.techId)}${r.status?' · '+(LJ_ST[r.status]||r.status):''}${r.fee?' · '+fmt(r.fee)+' ₺':''}`;
   return`${r.date?trDate(r.date)+' · ':''}${whoLabel(r)} ${fmt(r.amount)} ₺${r.note?' · '+r.note:''}`}
 const FLD={rate:'yüzde',kkRate:'KK oranı',kkOn:'KK kesintisi',fatura:'fatura',implant:'implant',implantUnit:'implant birim',unit:'implant birim',banka:'banka',sigorta:'sigorta',diger:'diğer',digerNote:'diğer açıklama',name:'ad',active:'aktif',pay:'hakediş',open:'açılış bakiyesi',openDate:'açılış tarihi',auto:'günlük nakit',type:'tür',cur:'para birimi',order:'sıra'};
@@ -1048,6 +1121,7 @@ function auditText(scope,p){
     if(!f&&['doctors','technicians','kasalar'].includes(a))return{doctors:'Yeni doktor / başlık',technicians:'Yeni teknisyen',kasalar:'Yeni kasa'}[a];
     if(a==='doctors')return`Doktor ${docById(id)?docName(id):id} · ${FLD[f]||f||'kayıt'}`;
     if(a==='technicians')return`Teknisyen ${techById(id)?techName(id):id} · ${FLD[f]||f||'kayıt'}`;
+    if(!f&&a==='stok')return'Yeni stok ürünü';if(a==='stok')return`Stok ${stokById(id)?stokName(id):id} · ${({min:'en az',target:'hedef fiyat',url:'link',sup:'tedarikçi'})[f]||FLD[f]||f}`;
     if(a==='kasalar')return`Kasa ${kasaById(id)?kasaName(id):id} · ${FLD[f]||f||'kayıt'}`;
     return'Ayar · '+p.join('.')}
   const m=scope;
@@ -1055,7 +1129,7 @@ function auditText(scope,p){
     if(k==='e')return`${d} · ${docName(p[3])} kazancı`;if(k==='h')return`${d} · toplam harcama`;if(k==='kk')return`${d} · günün KK toplamı`;if(k==='vg')return`${d} · vergi`;if(k==='n')return`${d} · günün notu`;
     if(k==='pos')return`${d} · ${kasaName(p[3])} POS tutarı`;if(k==='x')return`${d} · harcama kalemi${p[4]==='c'?' kategorisi':''}`;return`${d} · ${p.slice(2).join('.')}`}
   if(LED[p[0]])return`${LED[p[0]].title} kaydı (${monthName(m)})`;
-  if(p[0]==='kh')return`Kasa hareketi (${monthName(m)})`;if(p[0]==='lj')return`Laboratuvar işi`;
+  if(p[0]==='kh')return`Kasa hareketi (${monthName(m)})`;if(p[0]==='lj')return`Laboratuvar işi`;if(p[0]==='sm')return`Stok hareketi`;
   if(p[0]==='monthly')return`Aylık hesap ${monthName(m)} · ${docName(p[1])} · ${FLD[p[2]]||p[2]}`;
   return`${monthName(m)} · ${p.join('.')}`}
 function valText(p,v){if(v==null||v==='')return'—';if(typeof v==='object')return recText(p,v);if(typeof v==='boolean')return v?'evet':'hayır';if(typeof v==='number')return fmt(v);return String(v).slice(0,200)}
@@ -1135,6 +1209,121 @@ ACT.ljLed=a=>{const m=a.dataset.m,id=a.dataset.id;const j=withAll(()=>((Mo(m).lj
 ACT.ljDel=a=>{if(!confirm('Bu laboratuvar işi silinsin mi?'))return;patchMonth(a.dataset.m,{lj:{[a.dataset.id]:DEL}});ALL.at=0;setTimeout(refreshLab,50)};
 function shLab(m){const L=withAll(()=>ljAll()).filter(j=>ym(j.sent)===m);const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Laboratuvar Takibi',b:1}],[],H(['Gönderim','Laboratuvar','Doktor','Hasta / dosya','İş','Beklenen teslim','Teslim alınan','Durum','Ücret','Tekrar maliyeti','Kime'])];
   L.sort((a,b)=>a.sent.localeCompare(b.sent)).forEach(j=>rows.push([trDate(j.sent),techName(j.techId),j.docId?docName(j.docId):'',j.hasta||'',j.is||'',j.due?trDate(j.due):'',j.got?trDate(j.got):'',LJ_ST[j.status||'gonderildi'],+j.fee||'',+j.redoCost||'',REDO_WHO[j.redoWho]||'']));return{name:'Lab Takip',rows}}
+
+/* ================= STOK, SKT VE FİYAT TAKİBİ ================= */
+const STK_CATS=['Sarf malzeme','İmplant','Kemik tozu / membran','İlaç / anestezik','Ölçü / dolgu','Temizlik / hijyen','Ofis','Diğer'];
+const STK_UNITS=['adet','kutu','paket','koli','gr','ml','şişe'];
+const stokList=all=>Object.entries(S.settings.stok||{}).map(([id,x])=>({id,...x})).filter(x=>x.name&&(all||x.active!==false)).sort((a,b)=>trSort(a.cat||'',b.cat||'')||trSort(a.name,b.name));
+const stokById=id=>stokList(1).find(x=>x.id===id);
+const stokName=id=>{const x=stokById(id);return x?x.name:'(silinmiş ürün)'};
+const qf=v=>fmt(Math.round((+v||0)*100)/100);
+function stokMoves(m){return Object.entries(Mo(m).sm||{}).map(([id,e])=>({id,m,...e})).filter(e=>e&&e.date&&e.item)}
+// withAll içinde çağrılır: her ürünün bakiyesi, lotları, fire ve tüketimi
+function stokCalc(){const R={};stokList(1).forEach(x=>R[x.id]={qty:0,lots:{},fire:0,used30:0,lastPrice:0,lastIn:'',moves:0});
+  const ms=Object.keys(S.months).sort().flatMap(m=>stokMoves(m)).sort((a,b)=>a.date.localeCompare(b.date)||(a.at||0)-(b.at||0));
+  const from30=shiftDay(todayStr(),-30);
+  const take=(r,q,lot)=>{if(lot&&r.lots[lot]){const t=Math.min(q,r.lots[lot].qty);r.lots[lot].qty-=t;q-=t}
+    Object.entries(r.lots).filter(([,l])=>l.qty>0).sort((a,b)=>(a[1].skt||'9999').localeCompare(b[1].skt||'9999')).forEach(([,l])=>{if(q<=0)return;const t=Math.min(q,l.qty);l.qty-=t;q-=t})};
+  ms.forEach(e=>{const r=R[e.item];if(!r)return;const q=+e.qty||0;r.moves++;
+    if(e.kind==='in'){r.qty+=q;const k=e.lot||'';const l=r.lots[k]=r.lots[k]||{qty:0,skt:''};l.qty+=q;if(e.skt&&(!l.skt||e.skt<l.skt))l.skt=e.skt;if(+e.price){r.lastPrice=+e.price;r.lastIn=e.date}}
+    else if(e.kind==='out'){r.qty-=q;take(r,q,e.lot);if(e.date>=from30)r.used30+=q}
+    else if(e.kind==='count'){const diff=q-r.qty;e._diff=diff;if(diff<0){r.fire+=-diff;take(r,-diff)}else if(diff>0){const l=r.lots['']=r.lots['']||{qty:0,skt:''};l.qty+=diff}r.qty=q}});
+  Object.values(R).forEach(r=>{const ls=Object.entries(r.lots).filter(([,l])=>l.qty>0.0001);r.lotList=ls.map(([k,l])=>({lot:k,qty:l.qty,skt:l.skt})).sort((a,b)=>(a.skt||'9999').localeCompare(b.skt||'9999'));r.skt=(r.lotList.find(l=>l.skt)||{}).skt||''});
+  return{R,ms}}
+function stokAlerts(R){const t=todayStr(),lim=shiftDay(t,90),out=[];
+  stokList().forEach(x=>{const r=R[x.id];if(!r)return;
+    if(+x.min&&r.qty<=+x.min)out.push({x,kind:'min',text:`${x.name}: ${qf(r.qty)} ${x.unit||'adet'} kaldı (en az ${qf(x.min)})`});
+    r.lotList.filter(l=>l.skt&&l.skt<=lim).forEach(l=>out.push({x,kind:l.skt<t?'skt0':'skt',text:`${x.name}${l.lot?' · lot '+l.lot:''}: ${qf(l.qty)} ${x.unit||'adet'}, son kullanma ${trDate(l.skt)}${l.skt<t?' (geçmiş)':' ('+daysBetween(t,l.skt)+' gün)'}`}));
+    const pr=(STK.price||{})[x.id];if(pr&&pr.ok&&+x.target&&pr.price<=+x.target)out.push({x,kind:'fiyat',text:`${x.name}: internette ${fmt(pr.price)} ₺ (hedef ${fmt(x.target)} ₺)`})});
+  return out}
+const STK={price:null,priceErr:'',q:''};
+function renderStok(){const adm=isAdmin(),items=stokList();
+  main.innerHTML=`<div class="card"><div class="row between"><h2 style="margin:0">Uyarılar</h2>${adm?`<button class="b s" data-act="stOrder">Sipariş listesi oluştur</button>`:''}</div><div id="stAlerts"><div class="muted">Hesaplanıyor…</div></div><div id="stOrderBox"></div></div>
+  <div class="card"><h2>Stok hareketi</h2>${items.length?`<div class="row">
+    <label class="f">Tarih<input type="date" id="smDate" value="${todayStr()}"></label>
+    <label class="f">İşlem<select id="smKind"><option value="out">Kullanım (stoktan düş)</option><option value="in">Giriş (alım)</option><option value="count">Sayım (elde olan)</option></select></label>
+    <label class="f" style="min-width:200px">Ürün<select id="smItem">${items.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></label>
+    <label class="f">Adet / miktar<input id="smQty" class="num" inputmode="decimal" placeholder="0" data-enter="smAdd"></label>
+    <label class="f sm-lot">Lot / seri no<input id="smLot" placeholder="varsa"></label>
+    <label class="f sm-in">Son kullanma<input type="date" id="smSkt"></label>
+    <label class="f sm-in">Birim fiyat<input id="smPrice" class="num" inputmode="decimal" placeholder="₺"></label>
+    <label class="f" style="flex:1;min-width:150px">Not<input id="smNote" placeholder="ör. hasta / dosya no, tedarikçi" data-enter="smAdd"></label>
+    <button class="b p" data-act="smAdd">Kaydet</button></div>
+    <div class="muted small" style="margin-top:6px">Sayım: raftaki gerçek adedi yazın. Sistemdeki adetle arasındaki fark fire / kayıp olarak raporlanır.</div>`:`<div class="hint">Henüz ürün yok.${adm?' Aşağıdan ürün ekleyin.':' Yöneticinizden ürünleri eklemesini isteyin.'}</div>`}</div>
+  <div class="card"><div class="row between" style="margin-bottom:8px"><h2 style="margin:0">Ürünler</h2><input id="stQ" placeholder="Ürün ara" value="${esc(STK.q)}" style="max-width:220px"></div><div class="scroll" id="stList"></div>
+    ${adm?`<div id="stPriceInfo" class="muted small" style="margin-top:8px"></div>`:''}</div>
+  ${adm?`<div class="card"><h2>Ürün ekle</h2><div class="row">
+    <label class="f" style="min-width:200px">Ürün adı<input id="nsName" placeholder="ör. Nitril eldiven M" data-enter="stAdd"></label>
+    <label class="f">Kategori<select id="nsCat">${STK_CATS.map(c=>`<option>${c}</option>`).join('')}</select></label>
+    <label class="f">Birim<select id="nsUnit">${STK_UNITS.map(c=>`<option>${c}</option>`).join('')}</select></label>
+    <label class="f">En az (kritik)<input id="nsMin" class="num" placeholder="0" style="width:100px"></label>
+    <label class="f">Tedarikçi<input id="nsSup" placeholder="ör. X Dental"></label>
+    <label class="f" style="flex:1;min-width:220px">İnternet linki (fiyat takibi)<input id="nsUrl" placeholder="https://…"></label>
+    <label class="f">Haber ver, fiyat şunun altına inerse<input id="nsTarget" class="num" placeholder="₺" style="width:120px"></label>
+    <button class="b p" data-act="stAdd">Ekle</button></div></div>`:''}
+  <div class="card"><div class="row between" style="margin-bottom:10px"><h2 style="margin:0">Hareketler ve fire</h2>${monthBar()}</div><div class="scroll" id="stMoves"></div></div>`;
+  smForm();refreshStok();loadAll().then(refreshStok).catch(()=>{});if(adm&&!STK.price)loadPrices()}
+function smForm(){const k=$('smKind');if(!k)return;document.querySelectorAll('.sm-in').forEach(e=>e.style.display=k.value==='in'?'':'none');document.querySelectorAll('.sm-lot').forEach(e=>e.style.display=k.value==='count'?'none':'')}
+CHANGE.push(t=>{if(U.tab==='stok'&&t.id==='smKind')smForm()});
+INPUT.push(t=>{if(U.tab==='stok'&&t.id==='stQ'){STK.q=t.value;refreshStok()}});
+function refreshStok(){const al=$('stAlerts');if(!al)return;
+  withAll(()=>{const{R,ms}=stokCalc();const A=stokAlerts(R);STK.R=R;
+    const ic={min:'Az kaldı',skt:'Son kullanma yaklaşıyor',skt0:'Son kullanma geçmiş',fiyat:'Fiyat düştü'};
+    al.innerHTML=A.length?`<div class="alist">${A.map(a=>`<div class="al al-${a.kind}"><b>${ic[a.kind]}</b><span>${esc(a.text)}</span></div>`).join('')}</div>`:'<div class="muted">Şu an uyarı yok. Kritik stok, 90 gün içinde son kullanma tarihi dolan ürünler ve hedefin altına inen fiyatlar burada görünür.</div>';
+    const q=STK.q.toLocaleLowerCase('tr'),adm=isAdmin();const items=stokList().filter(x=>!q||(x.name+' '+(x.cat||'')+' '+(x.sup||'')).toLocaleLowerCase('tr').includes(q));
+    const el=$('stList');if(el)el.innerHTML=`<table class="sticky1"><thead><tr><th class="l">Ürün</th><th class="l">Kategori</th><th>Mevcut</th><th>En az</th><th class="l">Lotlar / son kullanma</th><th>Son 30 gün kullanım</th><th>Son alış</th>${adm?'<th>İnternet fiyatı</th><th>Hedef</th><th class="l">Tedarikçi</th><th></th>':''}</tr></thead><tbody>
+      ${items.map(x=>{const r=R[x.id]||{qty:0,lotList:[]},low=+x.min&&r.qty<=+x.min,pr=(STK.price||{})[x.id];
+        return`<tr><td class="l">${adm?`<input class="w" data-st="${x.id}" data-sf2="name" value="${esc(x.name)}" style="width:180px">`:`<b>${esc(x.name)}</b>`}${x.url?` <a href="${esc(x.url)}" target="_blank" rel="noopener" class="small">link</a>`:''}</td><td class="l small">${esc(x.cat||'')}</td>
+        <td class="${low?'neg':''}"><b>${qf(r.qty)}</b> <span class="muted small">${esc(x.unit||'adet')}</span></td>
+        <td class="${adm?'in':''}">${adm?`<input data-st="${x.id}" data-sf2="min" value="${x.min?qf(x.min):''}" placeholder="0" style="width:70px">`:qf(x.min)}</td>
+        <td class="l small">${(r.lotList=r.lotList.filter(l=>l.lot||l.skt)).length?r.lotList.slice(0,3).map(l=>`${l.lot?esc(l.lot)+': ':''}${qf(l.qty)}${l.skt?` · <span class="${l.skt<=shiftDay(todayStr(),90)?'neg':''}">${trDate(l.skt)}</span>`:''}`).join('<br>')+(r.lotList.length>3?'<br>…':''):'<span class="muted">—</span>'}</td>
+        <td>${r.used30?qf(r.used30):''}</td><td>${r.lastPrice?fmt(r.lastPrice)+' ₺':''}</td>
+        ${adm?`<td>${x.url?(pr?(pr.ok?`<span class="${+x.target&&pr.price<=+x.target?'ok-t':''}">${fmt(pr.price)} ₺</span>`:'<span class="muted small" title="'+esc(pr.err||'')+'">okunamadı</span>'):'<span class="muted small">bekleniyor</span>'):''}</td>
+        <td class="in"><input data-st="${x.id}" data-sf2="target" value="${x.target?fmt(x.target):''}" placeholder="₺" style="width:90px"></td>
+        <td class="l in"><input data-st="${x.id}" data-sf2="sup" value="${esc(x.sup||'')}" style="width:130px"></td>
+        <td class="l"><button class="b s" data-act="stUrl" data-id="${x.id}">Link</button> <button class="b s d" data-act="stOff" data-id="${x.id}">Kaldır</button></td>`:''}</tr>`}).join('')||`<tr><td class="l muted" colspan="11">${stokList().length?'Aramaya uyan ürün yok.':'Henüz ürün yok.'}</td></tr>`}</tbody></table>`;
+    const pi=$('stPriceInfo');if(pi)pi.innerHTML=stokList().some(x=>x.url)?(STK.priceErr?esc(STK.priceErr):STK.price?`İnternet fiyatları günde iki kez kontrol edilir; hedefin altına inen olursa e-posta gelir. <button class="b s" data-act="stCheck">Şimdi kontrol et</button>`:'Fiyat sonuçları yükleniyor…'):'Fiyat takibi için ürünlere internet linki ve hedef fiyat ekleyin (Link düğmesi).';
+    const mv=$('stMoves');if(mv){const L=ms.filter(e=>ym(e.date)===U.month).reverse();const fire={};L.filter(e=>e.kind==='count'&&e._diff<0).forEach(e=>fire[e.item]=(fire[e.item]||0)-e._diff);
+      const KN={in:'Giriş',out:'Kullanım',count:'Sayım'};
+      mv.innerHTML=`<table><thead><tr><th class="l">Tarih</th><th class="l">İşlem</th><th class="l">Ürün</th><th>Miktar</th><th class="l">Lot / SKT</th><th>Fiyat</th><th class="l">Not</th><th class="l">Giren</th><th></th></tr></thead><tbody>
+      ${L.map(e=>`<tr><td class="l">${trDate(e.date)}</td><td class="l">${KN[e.kind]}</td><td class="l">${esc(stokName(e.item))}</td><td>${qf(e.qty)}${e.kind==='count'&&e._diff?` <span class="${e._diff<0?'neg':'ok-t'} small">(${e._diff>0?'+':''}${qf(e._diff)})</span>`:''}</td><td class="l small">${esc(e.lot||'')}${e.skt?' · '+trDate(e.skt):''}</td><td>${+e.price?fmt(e.price):''}</td><td class="l small">${esc(e.note||'')}</td><td class="l small muted">${esc(e.bn||'')}</td><td>${isAdmin()?`<button class="b s d" data-act="smDel" data-id="${e.id}" data-m="${e.m}">Sil</button>`:''}</td></tr>`).join('')||'<tr><td class="l muted" colspan="9">Bu ay stok hareketi yok.</td></tr>'}</tbody></table>
+      ${Object.keys(fire).length?`<h3>Fire / kayıp (${monthName(U.month)} sayımları)</h3><div class="small">${Object.entries(fire).map(([k,v])=>{const x=stokById(k);return`${esc(stokName(k))}: <b class="neg">${qf(v)} ${esc((x||{}).unit||'adet')}</b>${(R[k]||{}).lastPrice?` (≈ ${fmt(v*R[k].lastPrice)} ₺)`:''}`}).join(' · ')}</div>`:''}`}})}
+ACT.smAdd=()=>{const item=$('smItem').value,kind=$('smKind').value,date=$('smDate').value,q=parseNum($('smQty').value);
+  if(!date){toast('Tarih seçin');return}if(!(q>0)&&!(kind==='count'&&$('smQty').value.trim()==='0')){$('smQty').focus();toast('Miktarı yazın');return}
+  const e={date,item,kind,qty:q||0,note:$('smNote').value.trim(),...me()};if(kind!=='count'){const l=$('smLot').value.trim();if(l)e.lot=l}
+  if(kind==='in'){const s=$('smSkt').value;if(s)e.skt=s;const p=parseNum($('smPrice').value);if(p)e.price=p}
+  patchMonth(ym(date),{sm:{['s'+uid()]:e}});ALL.at=0;['smQty','smLot','smSkt','smPrice','smNote'].forEach(i=>{const x=$(i);if(x)x.value=''});toast('Kaydedildi');setTimeout(refreshStok,60)};
+ACT.smDel=a=>{if(!confirm('Bu stok hareketi silinsin mi?'))return;patchMonth(a.dataset.m,{sm:{[a.dataset.id]:DEL}});ALL.at=0;setTimeout(refreshStok,60)};
+ACT.stAdd=()=>{const n=$('nsName').value.trim();if(!n){$('nsName').focus();return}const x={name:n,cat:$('nsCat').value,unit:$('nsUnit').value,min:parseNum($('nsMin').value)||0,sup:$('nsSup').value.trim(),url:$('nsUrl').value.trim(),target:parseNum($('nsTarget').value)||0,active:true};
+  if(x.url&&!/^https?:\/\//i.test(x.url)){toast('Link https:// ile başlamalı');return}
+  patchSettings({stok:{['p'+uid()]:x}});['nsName','nsMin','nsSup','nsUrl','nsTarget'].forEach(i=>$(i).value='');toast('Ürün eklendi');if(x.url)setTimeout(pushWatch,800)};
+ACT.stOff=a=>{if(!confirm(stokName(a.dataset.id)+' listeden kaldırılsın mı? Geçmiş hareketleri silinmez.'))return;patchSettings({stok:{[a.dataset.id]:{active:false}}});setTimeout(pushWatch,800)};
+ACT.stUrl=a=>{const x=stokById(a.dataset.id);const v=prompt('Fiyatı takip edilecek ürün sayfasının linki (boş bırakırsanız takip kapanır):',x.url||'');if(v===null)return;const u=v.trim();if(u&&!/^https?:\/\//i.test(u)){alert('Link https:// ile başlamalı');return}patchSettings({stok:{[x.id]:{url:u}}});setTimeout(pushWatch,800)};
+CHANGE.push(t=>{if(U.tab!=='stok'||!t.dataset.st)return;const f=t.dataset.sf2;let v=t.value.trim();if(['min','target'].includes(f))v=parseNum(v)||0;if(f==='name'&&!v)return;patchSettings({stok:{[t.dataset.st]:{[f]:v}}});toast('Kaydedildi');if(f==='target')setTimeout(pushWatch,800)});
+ACT.stOrder=()=>{const R=STK.R||{};const L=stokList().filter(x=>+x.min&&(R[x.id]||{qty:0}).qty<=+x.min);const box=$('stOrderBox');if(!box)return;
+  if(!L.length){box.innerHTML='<div class="muted small" style="margin-top:8px">Kritik seviyede ürün yok.</div>';return}
+  const by={};L.forEach(x=>{const r=R[x.id]||{qty:0,used30:0};const need=Math.max(+x.min*2-r.qty,r.used30-r.qty,1);(by[x.sup||'Tedarikçi belirtilmemiş']=by[x.sup||'Tedarikçi belirtilmemiş']||[]).push(`- ${x.name}: ${qf(Math.ceil(need))} ${x.unit||'adet'}`)});
+  const txt=Object.entries(by).map(([s,l])=>`${s}\n${l.join('\n')}`).join('\n\n');
+  box.innerHTML=`<h3>Sipariş listesi</h3><textarea id="stOrderTxt" rows="${Math.min(16,txt.split('\n').length+4)}" style="width:100%">${esc(cname()+' sipariş listesi ('+trDate(todayStr())+')\n\n'+txt)}</textarea><div class="row" style="margin-top:6px"><button class="b s p" data-act="stCopy">Kopyala</button><span class="muted small">Önerilen miktar: en az seviyenin iki katına ya da son 30 günlük kullanıma tamamlar. Gerekirse düzeltip tedarikçiye gönderin.</span></div>`};
+ACT.stCopy=async()=>{const t=$('stOrderTxt');try{await navigator.clipboard.writeText(t.value);toast('Kopyalandı')}catch(e){t.select();document.execCommand&&document.execCommand('copy');toast('Kopyalandı')}};
+// Fiyat takibi: liste Google betiğine gönderilir, betik günde iki kez kontrol edip e-posta atar
+function watchList(){return stokList().filter(x=>x.url).map(x=>({id:x.id,name:x.name,url:x.url,target:+x.target||0}))}
+async function pushWatch(){const s=S.settings;if(!isAdmin()||!s.scriptUrl||!s.email)return;
+  try{await fetch(s.scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:s.token,action:'watch',to:s.email,clinic:cname(),items:watchList()})})}catch(e){console.error(e)}}
+async function loadPrices(){const s=S.settings;if(!s.scriptUrl){STK.priceErr='Fiyat takibi için Yönetim → E-posta bölümündeki Google betiğinin kurulu olması gerekir.';refreshStok();return}
+  try{const r=await fetch(s.scriptUrl+'?token='+encodeURIComponent(s.token)+'&action=prices&t='+Date.now());const tx=await r.text();if(!/^\s*\{/.test(tx))throw new Error('eski betik');const j=JSON.parse(tx);STK.price=j.results||{};STK.priceErr=''}
+  catch(e){STK.priceErr='Fiyat sonuçları okunamadı. Yönetim → E-posta bölümündeki Google betiğini yeni sürümüyle güncelleyin (kodu yeniden kopyalayıp yapıştırın ve "Yeni dağıtım" yapın).'}
+  refreshStok()}
+ACT.stCheck=async()=>{const s=S.settings;if(!s.scriptUrl)return;await pushWatch();toast('Kontrol başlatıldı, birkaç saniye sürer');
+  try{await fetch(s.scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:s.token,action:'check'})})}catch(e){}setTimeout(loadPrices,9000)};
+// Günlük stok uyarı e-postası (yönetici panelini açınca, günde bir kez)
+async function stockMail(){const s=S.settings;if(!s.scriptUrl||!s.email||s.lastStockMail===todayStr()||!stokList().length)return;
+  await loadAll();const A=withAll(()=>stokAlerts(stokCalc().R)).filter(a=>a.kind!=='fiyat');if(!A.length)return;await patchSettings({lastStockMail:todayStr()});
+  await sendMail(`[${cname()}] Stok uyarısı – ${trDate(todayStr())}`,`<h3 style="font-family:Arial">${esc(cname())} stok uyarıları</h3><ul style="font-family:Arial;font-size:14px">${A.map(a=>`<li>${esc(a.text)}</li>`).join('')}</ul><p style="font-family:Arial;font-size:12px;color:#666">Panel → Stok sayfasından sipariş listesi oluşturabilirsiniz.</p>`)}
+function shStok(m){const r=withAll(()=>stokCalc());const rows=[[{v:(S.settings.clinicName||'')+' — Stok durumu ('+trDate(todayStr())+')',b:1}],[],H(['Ürün','Kategori','Mevcut','Birim','En az','En yakın son kullanma','Son alış fiyatı','Tedarikçi'])];
+  stokList().forEach(x=>{const q=r.R[x.id]||{qty:0};rows.push([x.name,x.cat||'',q.qty,x.unit||'adet',+x.min||0,q.skt?trDate(q.skt):'',q.lastPrice||'',x.sup||''])});
+  rows.push([],[{v:monthName(m)+' stok hareketleri',b:1}],H(['Tarih','İşlem','Ürün','Miktar','Lot','Son kullanma','Birim fiyat','Not','Giren']));
+  r.ms.filter(e=>ym(e.date)===m).forEach(e=>rows.push([trDate(e.date),{in:'Giriş',out:'Kullanım',count:'Sayım'}[e.kind],stokName(e.item),+e.qty||0,e.lot||'',e.skt?trDate(e.skt):'',+e.price||'',e.note||'',e.bn||'']));return{name:'Stok',rows}}
 
 /* ===== PAROLALI EXCEL (Office şifreleme) ===== */
 const rdU32=(a,o)=>new DataView(a.buffer,a.byteOffset,a.byteLength).getUint32(o,true);

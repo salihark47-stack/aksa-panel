@@ -96,6 +96,10 @@ tr.click{cursor:pointer}tr.click:hover td{background:#f6faf9}tr.sel td{backgroun
 .neg{color:var(--red)}.ok-t{color:var(--green);font-weight:700}.muted{color:var(--muted)}.small{font-size:12px}
 td.in input{width:110px;padding:4px 6px;text-align:right}td.in input.w{width:160px;text-align:left}
 .netc{background:var(--pri2)!important;font-weight:700}
+.chart{width:100%;height:auto;display:block}.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 4px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hbars{display:grid;gap:5px}.hb{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:8px;align-items:center;font-size:13px}.hbk{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hbt{background:#eef1f4;border-radius:4px;height:12px;overflow:hidden}.hbt div{height:100%;border-radius:0 4px 4px 0}.hbv{font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
+.hero{margin-top:12px;padding:12px 14px;background:var(--pri2);border:1px solid #b9dcdc;border-radius:12px}.hero .k{font-size:13px;color:var(--muted)}.hero .v{font-size:28px;font-weight:800;margin:2px 0}
+.seg{display:flex;gap:4px}.g2e{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:14px}@media(max-width:700px){.g2e{grid-template-columns:minmax(0,1fr)}}.cat-s{font-size:12px;padding:2px 4px;margin-top:3px;max-width:100%}
 .hint{background:#fff8e6;border:1px solid #f3dca1;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}
 pre{background:#0f1720;color:#e6edf3;padding:12px;border-radius:8px;overflow:auto;font-size:12px}
 .toast{position:fixed;bottom:20px;right:20px;left:auto;max-width:90vw;background:#1d2733;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
@@ -336,7 +340,7 @@ const FOY_DEFAULT=`- Her doktor sütununda yukarıda tek tek işlemler ve kırm�
 - Harcamaların içinde vergi ödemesi (vergi, KDV, stopaj, muhtasar vb.) varsa bunların toplamını VERGİ satırına yaz.
 - Sağdaki Harcamalar kalemlerini yazma. Alt kısımdaki Toplam'ı TOPLAM, K.K'yı KK TOPLAM olarak yaz. Genel Harcama yazıyorsa onu, yoksa Harcamalar toplamını HARCAMA TOPLAM olarak yaz.
 - NE, NE+SH ve Kalan satırlarını yazma.`;
-const DEF_SETTINGS={clinicName:'',kkRate:5,doctors:{},technicians:{},email:'',scriptUrl:'',token:'',autoDaily:true,autoMonthly:true,lastDailyBackup:'',lastMonthlyReport:''};
+const DEF_SETTINGS={clinicName:'',kkRate:5,doctors:{},technicians:{},email:'',scriptUrl:'',token:'',autoDaily:true,autoMonthly:true,lastDailyBackup:'',lastMonthlyReport:'',expCats:'',kasalar:{}};
 const S={settings:{...DEF_SETTINGS},doctors:[],technicians:[],months:{},users:[],uid:null,email:'',name:'',role:'staff',owner:false,settingsLoaded:false};
 const U={tab:'genel',date:todayStr(),month:ym(todayStr()),edit:{}};
 const isAdmin=()=>S.role==='admin';
@@ -349,7 +353,7 @@ const techById=id=>S.technicians.find(t=>t.id===id);
 const docName=id=>{const d=docById(id);return d?d.name:'(silinmiş)'};
 const techName=id=>id?((techById(id)||{name:'(silinmiş)'}).name):'Excel aktarımı';
 const Mo=m=>S.months[m]||{};
-function getDay(d){const x=(Mo(ym(d)).days||{})[d]||{};const xx={...(x.x||{})};let h=+x.h||0;if(xx.imp_exp){if(!h)h=+xx.imp_exp.a||0;delete xx.imp_exp}return{e:x.e||{},x:xx,h,kk:+x.kk||0,vg:+x.vg||0,n:x.n||''}}
+function getDay(d){const x=(Mo(ym(d)).days||{})[d]||{};const xx={...(x.x||{})};let h=+x.h||0;if(xx.imp_exp){if(!h)h=+xx.imp_exp.a||0;delete xx.imp_exp}return{e:x.e||{},x:xx,h,kk:+x.kk||0,vg:+x.vg||0,pos:x.pos||{},n:x.n||''}}
 const dayHas=x=>!!x&&(Object.values(x.e||{}).some(v=>+v)||Object.keys(x.x||{}).length>0||!!+x.h||!!+x.kk||!!+x.vg||!!x.n);
 function monthDays(m){const ds=Mo(m).days||{};return Object.keys(ds).filter(k=>dayHas(ds[k])).sort()}
 function expList(day){return Object.entries(day.x).map(([id,v])=>({id,...v})).sort((a,b)=>(a.at||0)-(b.at||0))}
@@ -396,7 +400,7 @@ function typing(){const f=document.activeElement;return!!f&&main.contains(f)&&/^
 const main=$('main');
 function wrapTables(root){root.querySelectorAll('table').forEach(t=>{if(t.closest('.scroll,.tw'))return;const w=document.createElement('div');w.className='tw';t.parentNode.insertBefore(w,t);w.appendChild(t)})}
 new MutationObserver(()=>wrapTables(main)).observe(main,{childList:true,subtree:true});
-const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['fatura','Fatura'],['lab','Teknisyen İşleri'],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['yonetim','Yönetim',1]];
+const TABS=[['genel','Genel (Günlük)'],['hizli','Hızlı Giriş'],['kk','Kredi Kartı'],['avans','Avans'],['iade','İade'],['fatura','Fatura'],['lab','Teknisyen İşleri'],['kokpit','Kokpit',1],['kasa','Kasalar',1],['aylik','Aylık Hesap',1],['imp',"Excel'den Al",1],['yonetim','Yönetim',1]];
 function buildNav(){$('nav').innerHTML=TABS.filter(t=>!t[2]||isAdmin()).map(([k,l])=>`<button data-tab="${k}">${l}</button>`).join('')}
 $('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;U.tab=b.dataset.tab;U.edit={};render();window.scrollTo(0,0)});
 const ACT={},CHANGE=[],INPUT=[];
@@ -408,7 +412,7 @@ function monthBar(){return`<div class="mbar"><button class="b s" data-act="mPrev
 ACT.mPrev=()=>{U.month=shiftMonth(U.month,-1);U.edit={};render()};
 ACT.mNext=()=>{U.month=shiftMonth(U.month,1);U.edit={};render()};
 ACT.mNow=()=>{U.month=ym(todayStr());U.edit={};render()};
-const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),fatura:()=>renderLedger('fatura'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),yonetim:()=>renderYonetim()};
+const PAGES={genel:()=>renderGenel(),kk:()=>renderLedger('kk'),avans:()=>renderLedger('avans'),iade:()=>renderLedger('iade'),fatura:()=>renderLedger('fatura'),lab:()=>renderLedger('lab'),aylik:()=>renderAylik(),imp:()=>renderImport(),hizli:()=>quickRender(),kokpit:()=>renderKokpit(),kasa:()=>renderKasa(),yonetim:()=>renderYonetim()};
 function render(){
   if(!isAdmin()&&TABS.find(t=>t[0]===U.tab&&t[2]))U.tab='genel';
   syncWatch();settingsDirty=false;
@@ -424,6 +428,8 @@ function refresh(){
   if(U.tab==='genel')return refreshGenel();
   if(LED[U.tab])return refreshLedger();
   if(U.tab==='aylik')return t?updateAylik():renderAylik();
+  if(U.tab==='kasa'&&!t)return refreshKasa();
+  if(U.tab==='kokpit'&&ALL.m&&!t)return drawKokpit();
   if(U.tab==='yonetim'&&!t)return renderYonetim()}
 
 /* ================= GENEL (GÜNLÜK) ================= */
@@ -437,9 +443,9 @@ function renderGenel(){
     <h3>Harcamalar</h3>
     <div class="row"><label class="f">Günün toplam harcaması<input class="num" inputmode="decimal" id="dayH" placeholder="0"></label><label class="f">İçindeki vergi<input class="num" inputmode="decimal" id="dayV" placeholder="0"></label></div>
     <div id="expList"></div>
-    <div class="row" style="margin-top:6px"><input id="expDesc" placeholder="Ne için? (boşsa toplam harcama)" style="flex:1;min-width:150px" data-enter="expAdd"><input id="expAmt" class="num" placeholder="Tutar" inputmode="decimal" data-enter="expAdd"><button class="b s p" data-act="expAdd">Ekle</button></div>
+    <div class="row" style="margin-top:6px"><input id="expDesc" placeholder="Ne için? (boşsa toplam harcama)" style="flex:1;min-width:150px" data-enter="expAdd"><input id="expAmt" class="num" placeholder="Tutar" inputmode="decimal" data-enter="expAdd"><select id="expCat" title="Kategori"><option value="">Kategori: otomatik</option>${catList().map(c=>`<option>${esc(c)}</option>`).join('')}</select><button class="b s p" data-act="expAdd">Ekle</button></div>
     <div class="muted small" style="margin-top:4px">Açıklama yazmazsanız tutar günün <b>toplam harcaması</b> olur. Açıklama yazarsanız (ör. defter 1.200) toplamın <b>içinden</b> bir kalem olarak listelenir, toplama eklenmez. Toplam girilmemişse kalemlerin toplamı harcama sayılır.</div>
-    <h3>Kredi kartı</h3><div class="row"><label class="f">Günün toplam kredi kartı (POS)<input class="num" inputmode="decimal" id="dayKK" placeholder="0"></label><span id="kkHint"></span></div>
+    <h3>Kredi kartı</h3><div class="row"><label class="f">Günün toplam kredi kartı (POS)<input class="num" inputmode="decimal" id="dayKK" placeholder="0"></label><span id="kkHint"></span></div>${posBox()}
     <label class="f" style="margin-top:10px">Günün notu<input id="dayNote"></label>
     <div class="kpis" id="dayKpis"></div><div class="muted small" style="margin-top:8px">Yazdığınız her değer kutudan çıkınca kaydedilir ve diğer cihazlarda da görünür.</div></div>
     <div class="card"><div class="row between" style="margin-bottom:10px"><h2 style="margin:0">Gün gün rapor</h2>${monthBar()}${isAdmin()?`<button class="b s" data-act="xlsGenel">Excel'e aktar</button>`:''}</div><div class="scroll" id="monthTable"></div></div></div>`;
@@ -448,12 +454,12 @@ function refreshGenel(){
   const day=getDay(U.date);
   document.querySelectorAll('[data-earn]').forEach(i=>{if(i!==document.activeElement){const v=day.e[i.dataset.earn];i.value=v?fmt(v):''}});
   const k=$('dayKK');if(k&&k!==document.activeElement)k.value=day.kk?fmt(day.kk):'';
-  const n=$('dayNote');if(n&&n!==document.activeElement)n.value=day.n;
+  const n=$('dayNote');if(n&&n!==document.activeElement)n.value=day.n;refreshPos();
   const kkPage=sum(entries('kk',ym(U.date)).filter(e=>e.date===U.date).map(e=>e.amount));const h=$('kkHint');
   if(h)h.innerHTML=kkPage&&Math.abs(kkPage-day.kk)>0.01?`<button class="b s" data-act="kkFromPage">Kredi Kartı sayfasındaki toplamı al (${fmt(kkPage)})</button>`:'';
   const hi=$('dayH');if(hi&&hi!==document.activeElement)hi.value=day.h?fmt(day.h):'';const vi=$('dayV');if(vi&&vi!==document.activeElement)vi.value=day.vg?fmt(day.vg):'';
   const el=$('expList');if(el){const xs=expList(day),ei=expInfo(day);
-    el.innerHTML=xs.length?`<div class="small muted" style="margin:8px 0 4px">${day.h?'Toplamın dökümü':'Harcama kalemleri'}</div><table class="exp"><tbody>${xs.map(x=>`<tr><td class="l">${esc(x.d||'—')}${x.bn?` <span class="muted small">· ${esc(x.bn)}</span>`:''}</td><td>${fmt(x.a)} ₺</td><td style="width:1%"><button class="b s d" data-act="expDel" data-id="${x.id}">Sil</button></td></tr>`).join('')}
+    el.innerHTML=xs.length?`<div class="small muted" style="margin:8px 0 4px">${day.h?'Toplamın dökümü':'Harcama kalemleri'}</div><table class="exp"><tbody>${xs.map(x=>`<tr><td class="l">${esc(x.d||'—')}${x.bn?` <span class="muted small">· ${esc(x.bn)}</span>`:''}<div><select class="cat-s" data-expcat="${x.id}"><option value="">${esc(autoCat(x.d))} (otomatik)</option>${catList().map(c=>`<option ${x.c===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div></td><td>${fmt(x.a)} ₺</td><td style="width:1%"><button class="b s d" data-act="expDel" data-id="${x.id}">Sil</button></td></tr>`).join('')}
       ${day.h?`<tr><td class="l muted">Açıklaması girilmeyen kısım</td><td class="${ei.rest<0?'neg':'muted'}">${fmt(ei.rest)} ₺</td><td></td></tr>`:''}
       <tr class="tot"><td class="l">${day.h?'Toplam harcama':'Kalemlerin toplamı = harcama'}</td><td>${fmt(ei.harcama)} ₺</td><td></td></tr></tbody></table>
       ${ei.rest<0?'<div class="neg small">Dökümdeki kalemlerin toplamı, girilen toplam harcamadan fazla. Toplamı ya da kalemleri kontrol edin.</div>':''}`:'<div class="muted small" style="margin-top:4px">Döküm kalemi yok.</div>'}
@@ -478,7 +484,7 @@ ACT.expAdd=()=>{const ds=$('expDesc'),am=$('expAmt'),v=parseNum(am.value);if(!v)
   const desc=ds.value.trim(),day=getDay(U.date);
   if(!desc){if(day.h&&day.h!==v&&!confirm(`Günün toplam harcaması ${fmt(day.h)} ₺ olarak girilmiş. ${fmt(v)} ₺ olarak değiştirilsin mi?`))return;
     patchMonth(ym(U.date),{days:{[U.date]:{h:v,x:{imp_exp:DEL}}}});toast('Toplam harcama: '+fmt(v)+' ₺')}
-  else{patchMonth(ym(U.date),{days:{[U.date]:{x:{[uid()]:{d:desc,a:v,...me()}}}}});if(day.h&&expInfo(day).items+v>day.h)toast('Uyarı: kalemlerin toplamı, günün toplam harcamasını aşıyor',1)}
+  else{const c=($('expCat')||{}).value;patchMonth(ym(U.date),{days:{[U.date]:{x:{[uid()]:{d:desc,a:v,...(c?{c}:{}),...me()}}}}});if(day.h&&expInfo(day).items+v>day.h)toast('Uyarı: kalemlerin toplamı, günün toplam harcamasını aşıyor',1)}
   ds.value='';am.value='';ds.focus()};
 ACT.expDel=a=>{if(!confirm('Bu harcama silinsin mi?'))return;patchMonth(ym(U.date),{days:{[U.date]:{x:{[a.dataset.id]:DEL}}}})};
 ACT.kkFromPage=()=>{const v=sum(entries('kk',ym(U.date)).filter(e=>e.date===U.date).map(e=>e.amount));patchMonth(ym(U.date),{days:{[U.date]:{kk:v||DEL}}})};
@@ -670,6 +676,7 @@ function renderYonetim(){
     <input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></div>
     <p class="muted small">Tam yedek; doktorları, ayarları ve bütün ayların kayıtlarını içerir. Eski bilgisayar uygulamasının yedeği (klinik-yedek_….json) de buradan yüklenebilir.</p></div>
 
+  ${yonKasaCard()}
   <div class="card"><h2>E-posta ile otomatik yedek ve ay sonu raporu</h2>
     <div class="row"><label class="f">Yedeklerin gideceği e-posta<input data-sf="email" value="${esc(s.email)}" style="width:280px"></label>
     <label class="f" style="flex:1;min-width:300px">Gönderici adresi (Apps Script URL)<input data-sf="scriptUrl" value="${esc(s.scriptUrl)}" placeholder="https://script.google.com/macros/s/.../exec"></label></div>
@@ -736,7 +743,7 @@ function ayRows(m){const docs=monthDoctors(m),cs=docs.map(d=>calcDoc(m,d));const
 function shAylik(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Doktor Ödemeleri',b:1}],[],H(AY_H),...ayRows(m)];const tc=calcTechs(m);
   rows.push([],[{v:'Teknisyen ödemeleri',b:1}],H(['Teknisyen','İş sayısı','Toplam iş','Avans','Ödenecek','Doktorlara dağılım']));tc.forEach(x=>rows.push([x.t.name,x.count,x.total,x.avans,{v:x.net,b:1},Object.keys(x.byDoc).map(k=>k+': '+fmt(x.byDoc[k])).join(' | ')]));return{name:'Aylık Hesap',rows}}
 function shVergi(m){const vl=monthVergiList(m);const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Vergiler',b:1}],[],H(['Tarih','Açıklama','Tutar'])];vl.forEach(v=>rows.push([trDate(v.date),v.d,v.a]));rows.push(B(['TOPLAM','',sum(vl.map(v=>v.a))]));return{name:'Vergiler',rows}}
-function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
+function monthWorkbook(m){return buildXlsx([shAylik(m),shGenel(m),shVergi(m),shKategori(m),shKasa(m),shLedger('kk',m),shLedger('fatura',m),shLedger('avans',m),shLedger('iade',m),shLedger('lab',m)])}
 async function withMonths(fn){const all=await store.allMonths();const keep=S.months;S.months=Object.assign({},all,keep);try{return fn(Object.keys(all).sort())}finally{S.months=keep}}
 async function allWorkbook(){return withMonths(ms=>{const g=[H(['Tarih','Doktor / Kalem','Tür','Tutar','Not','Giren'])];
   ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});if(x.h)g.push([trDate(k),'Günün toplam harcaması','Harcama (toplam)',x.h,'',''] );if(x.vg)g.push([trDate(k),'Harcamanın içindeki vergi','Vergi',x.vg,'','']);expList(x).forEach(e=>g.push([trDate(k),e.d||'—',x.h?'Harcama dökümü (toplamın içinde)':'Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
@@ -810,6 +817,176 @@ ACT.cleanJunk=async()=>{const j=S.doctors.filter(d=>specialCol(d.name)!==null);i
       ['kk','avans','iade','lab','fatura'].forEach(t=>Object.entries(d[t]||{}).forEach(([eid,e])=>{if(e&&ids.includes(e.docId)){p[t]=p[t]||{};p[t][eid]=DEL}}));ids.forEach(id=>{if((d.monthly||{})[id]){p.monthly=p.monthly||{};p.monthly[id]=DEL}});
       if(Object.keys(p).length)await store.patchMonth(m,p)}
     const del={};ids.forEach(id=>del[id]=DEL);await store.patchSettings({doctors:del});toast('Temizlendi',1)}catch(e){alert(errMsg(e))}};
+
+/* ================= GİDER KATEGORİLERİ ================= */
+const CAT_DEF='Kira, Elektrik-Su-Doğalgaz, Maaş, SGK, Vergi, Malzeme, Laboratuvar, Reklam, Yemek-Mutfak, Temizlik, Bakım-Onarım, Kargo-Ulaşım, Ofis-Kırtasiye, Diğer';
+const CAT_KW=[['SGK',/\bsgk\b|ba[gğ]-?kur/i],['Vergi',/vergi|kdv|stopaj|muhtasar|damga/i],['Kira',/kira/i],['Elektrik-Su-Doğalgaz',/elektrik|doğalgaz|dogalgaz|su fatura|^su$|igdaş|enerjisa|ck enerji/i],
+  ['Maaş',/maa[şs]|bordro|mesai|personel ödem/i],['Malzeme',/malzeme|eldiven|maske|peçete|pecete|önlük|onluk|kompozit|anestezi|implant|dental|depo|sarf/i],['Laboratuvar',/\blab|protez|teknisyen/i],
+  ['Reklam',/reklam|instagram|google|meta\b|sosyal medya|afiş|broşür|tabela/i],['Yemek-Mutfak',/yemek|market|çay|kahve|damacana|mutfak|ekmek|simit|şeker/i],['Temizlik',/temizlik|deterjan|çamaşır|çöp/i],
+  ['Bakım-Onarım',/tamir|bakım|onarım|servis|kompresör|tesisat/i],['Kargo-Ulaşım',/kargo|taksi|yakıt|benzin|mazot|otopark|ulaşım|\byol\b/i],['Ofis-Kırtasiye',/defter|kırtasiye|kalem|kağıt|toner|fotokopi|zarf/i]];
+const DIGER='Diğer',NOCAT='Dökümü girilmemiş harcama';
+function catList(){const l=String(S.settings.expCats||CAT_DEF).split(/[,\n]/).map(s=>s.trim()).filter(Boolean);if(!l.includes(DIGER))l.push(DIGER);return[...new Set(l)]}
+function autoCat(desc){const l=catList(),d=String(desc||'');const low=d.toLocaleLowerCase('tr');
+  const exact=l.find(c=>c!==DIGER&&low.includes(c.toLocaleLowerCase('tr')));if(exact)return exact;
+  for(const[c,re]of CAT_KW)if(l.includes(c)&&re.test(d))return c;return DIGER}
+const catOf=e=>e.c&&catList().includes(e.c)?e.c:autoCat(e.d);
+// Bir ayın günlük harcamalarının kategorilere dağılımı (vergi alanı ve dökümsüz kısım dahil)
+function monthCats(m){const o={};const add=(c,v)=>{if(v)o[c]=(o[c]||0)+v};
+  monthDays(m).forEach(k=>{const x=getDay(k),xs=expList(x);let items=0,vIt=0;
+    xs.forEach(e=>{const c=catOf(e);add(c,+e.a||0);items+=+e.a||0;if(c==='Vergi'||VERGI_RE.test(e.d||''))vIt+=+e.a||0});
+    let rest=x.h>0?x.h-items:0;if(x.vg>vIt){const ex=Math.min(x.vg-vIt,Math.max(rest,0)||x.vg-vIt);add('Vergi',ex);rest-=ex}
+    if(rest>0)add(NOCAT,rest)});return o}
+
+/* ================= KASALAR ================= */
+const KTYPE={nakit:'Nakit kasa',pos:'POS cihazı',banka:'Banka hesabı',doviz:'Döviz kasası'};
+const kasaList=(all)=>Object.entries(S.settings.kasalar||{}).map(([id,k])=>({id,...k})).filter(k=>k.name&&(all||k.active!==false)).sort(ordSort);
+const kasaById=id=>kasaList(1).find(k=>k.id===id);
+const kasaName=id=>{const k=kasaById(id);return k?k.name:'(silinmiş kasa)'};
+const kCur=k=>k&&k.type==='doviz'?(k.cur||'USD'):'TRY';
+const curSym=c=>({TRY:'₺',USD:'$',EUR:'€',GBP:'£'})[c]||c;
+const fmtK=(v,k)=>fmtc(v).replace(/\s*₺?$/,'')+' '+curSym(kCur(k));
+function posDay(x){return x.pos||{}}
+// Tüm aylar (canlı izlenen aylar öncelikli)
+const ALL={m:null,at:0,p:null};
+function loadAll(force){if(!force&&ALL.m&&Date.now()-ALL.at<60000)return Promise.resolve(ALL.m);if(ALL.p)return ALL.p;
+  ALL.p=store.allMonths().then(a=>{ALL.m=a||{};ALL.at=Date.now();ALL.p=null;return ALL.m}).catch(e=>{ALL.p=null;throw e});return ALL.p}
+function withAll(fn){const keep=S.months;S.months=Object.assign({},ALL.m||{},keep);try{return fn(Object.keys(S.months).sort())}finally{S.months=keep}}
+function kasaMoves(m){return Object.entries(Mo(m).kh||{}).map(([id,e])=>({id,...e})).filter(e=>e&&e.date).sort((a,b)=>a.date.localeCompare(b.date)||(a.at||0)-(b.at||0))}
+// withAll içinde çağrılmalı
+function kasaBalances(months,upTo){const ks=kasaList(1),B={};ks.forEach(k=>B[k.id]={open:+k.open||0,auto:0,pos:0,kom:0,inn:0,out:0,trIn:0,trOut:0,bal:+k.open||0});
+  const from=k=>k.openDate||'0000';upTo=upTo||'9999';
+  months.forEach(m=>{monthDays(m).forEach(d=>{if(d>upTo)return;const x=getDay(d);
+      ks.forEach(k=>{if(d<from(k))return;const b=B[k.id];
+        if(k.type==='nakit'&&k.auto){const v=dayCalc(d).net;b.auto+=v;b.bal+=v}
+        if(k.type==='pos'){const g=+posDay(x)[k.id]||0;if(g){const c=g*(+k.rate||0)/100;b.pos+=g;b.kom+=c;b.bal+=g-c}}})});
+    kasaMoves(m).forEach(e=>{if(e.date>upTo)return;const a=+e.amount||0;
+      if(e.kind==='in'&&B[e.kasa]&&e.date>=from(kasaById(e.kasa))){B[e.kasa].inn+=a;B[e.kasa].bal+=a}
+      if(e.kind==='out'&&B[e.kasa]&&e.date>=from(kasaById(e.kasa))){B[e.kasa].out+=a;B[e.kasa].bal-=a}
+      if(e.kind==='tr'){if(B[e.kasa]&&e.date>=from(kasaById(e.kasa))){B[e.kasa].trOut+=a;B[e.kasa].bal-=a}
+        const t=+e.toAmount||a;if(B[e.to]&&e.date>=from(kasaById(e.to))){B[e.to].trIn+=t;B[e.to].bal+=t}}})});
+  return B}
+function monthPosKom(m){const ks=kasaList(1).filter(k=>k.type==='pos');let g=0,c=0;monthDays(m).forEach(d=>{const p=posDay(getDay(d));ks.forEach(k=>{const v=+p[k.id]||0;g+=v;c+=v*(+k.rate||0)/100})});return{g,c}}
+function monthKasaGider(m){const o={};kasaMoves(m).filter(e=>e.kind==='out').forEach(e=>{const c=e.cat||DIGER;o[c]=(o[c]||0)+(+e.amount||0)});return o}
+
+// Genel sayfasındaki POS dağılımı
+function posBox(){const ks=kasaList().filter(k=>k.type==='pos');if(!ks.length)return'';
+  return`<div class="small muted" style="margin:8px 0 4px">Hangi POS'tan geçti? <span id="posRest"></span></div><div class="row">${ks.map(k=>`<label class="f">${esc(k.name)}${+k.rate?` <span class="muted">(%${fmt(k.rate)})</span>`:''}<input class="num" inputmode="decimal" data-pos="${k.id}" placeholder="0"></label>`).join('')}</div>`}
+function refreshPos(){const day=getDay(U.date),p=posDay(day);document.querySelectorAll('[data-pos]').forEach(i=>{if(i!==document.activeElement){const v=p[i.dataset.pos];i.value=v?fmt(v):''}});
+  const r=$('posRest');if(r){const s=sum(Object.values(p).map(Number));r.innerHTML=!s?'':Math.abs(s-day.kk)<1?'<span class="ok-t">✓ KK toplamıyla aynı</span>':`<span class="neg">POS'ların toplamı ${fmt(s)}, günün KK toplamı ${fmt(day.kk)} (fark ${fmt(day.kk-s)})</span>`}}
+CHANGE.push(t=>{if(U.tab!=='genel'||!t.dataset.pos)return;const v=parseNum(t.value);t.value=v?fmt(v):'';const d=U.date;if(v!==(+posDay(getDay(d))[t.dataset.pos]||0))patchMonth(ym(d),{days:{[d]:{pos:{[t.dataset.pos]:v||DEL}}}})});
+CHANGE.push(t=>{if(U.tab!=='genel'||!t.dataset.expcat)return;const v=t.value;patchMonth(ym(U.date),{days:{[U.date]:{x:{[t.dataset.expcat]:{c:v||DEL}}}}})});
+
+// Kasalar sayfası
+function renderKasa(){const m=U.month,ks=kasaList();
+  if(!ks.length){main.innerHTML=`<div class="card"><h2>Kasalar</h2><div class="hint">Henüz kasa tanımlanmamış. <b>Yönetim → Kasalar</b> bölümünden nakit kasa, POS cihazları (komisyon oranıyla), banka hesapları ve döviz kasalarını ekleyin.</div><button class="b p" data-act="goYon">Yönetim'e git</button></div>`;return}
+  const opt=(sel)=>ks.map(k=>`<option value="${k.id}" ${k.id===sel?'selected':''}>${esc(k.name)}</option>`).join('');
+  main.innerHTML=`<div class="card"><div class="row between"><h2 style="margin:0">Kasa bakiyeleri</h2><span class="muted small">Bugün itibarıyla</span></div><div class="kpis" id="kasaBal"><div class="muted">Hesaplanıyor…</div></div>
+    <div class="muted small" style="margin-top:8px">Nakit kasaya (otomatik işaretliyse) her günün NET nakdi eklenir. POS kasalarına günlük POS dağılımı komisyonu düşülerek eklenir. Aşağıdaki giriş, çıkış ve transferler de bakiyeye işlenir.</div></div>
+  <div class="card"><h2>Kasa hareketi ekle</h2><div class="row">
+    <label class="f">Tarih<input type="date" id="khDate" value="${U.month===ym(todayStr())?todayStr():U.month+'-01'}"></label>
+    <label class="f">İşlem<select id="khKind"><option value="out">Çıkış (gider / ödeme)</option><option value="in">Giriş (para girişi)</option><option value="tr">Transfer (kasadan kasaya)</option></select></label>
+    <label class="f">Kasa<select id="khKasa">${opt()}</select></label>
+    <label class="f kh-tr">Hedef kasa<select id="khTo">${opt(ks[1]&&ks[1].id)}</select></label>
+    <label class="f">Tutar<input id="khAmt" class="num" inputmode="decimal" placeholder="0"></label>
+    <label class="f kh-cur">Hedefe geçen tutar<input id="khToAmt" class="num" inputmode="decimal" placeholder="kur farkı varsa"></label>
+    <label class="f kh-out">Kategori<select id="khCat">${catList().map(c=>`<option>${esc(c)}</option>`).join('')}</select></label>
+    <label class="f" style="flex:1;min-width:160px">Açıklama<input id="khNote" data-enter="khAdd" placeholder="ör. Kasım kirası"></label>
+    <button class="b p" data-act="khAdd">Ekle</button></div>
+    <div class="muted small" style="margin-top:6px">Çıkışlar (kira, maaş, fatura gibi föy dışındaki ödemeler) kokpitte gider olarak sayılır. Föydeki günlük harcamaları buraya tekrar yazmayın.</div></div>
+  <div class="card"><div class="row between" style="margin-bottom:10px"><h2 style="margin:0">Hareketler</h2>${monthBar()}</div><div class="scroll" id="khList"></div></div>`;
+  khForm();refreshKasa()}
+function khForm(){const k=$('khKind');if(!k)return;const v=k.value;document.querySelectorAll('.kh-tr').forEach(e=>e.style.display=v==='tr'?'':'none');document.querySelectorAll('.kh-out').forEach(e=>e.style.display=v==='out'?'':'none');
+  const a=kasaById(($('khKasa')||{}).value),b=kasaById(($('khTo')||{}).value);document.querySelectorAll('.kh-cur').forEach(e=>e.style.display=v==='tr'&&kCur(a)!==kCur(b)?'':'none')}
+CHANGE.push(t=>{if(U.tab==='kasa'&&['khKind','khKasa','khTo'].includes(t.id))khForm()});
+function refreshKasa(){const m=U.month;const el=$('khList');
+  if(el){const ms=kasaMoves(m),pk=monthPosKom(m);
+    el.innerHTML=`<table><thead><tr><th class="l">Tarih</th><th class="l">İşlem</th><th class="l">Kasa</th><th>Tutar</th><th class="l">Kategori / açıklama</th><th class="l">Giren</th><th></th></tr></thead><tbody>
+    ${ms.map(e=>{const k=kasaById(e.kasa);return`<tr><td class="l">${trDate(e.date)}</td><td class="l">${e.kind==='in'?'Giriş':e.kind==='out'?'Çıkış':'Transfer'}</td><td class="l">${esc(kasaName(e.kasa))}${e.kind==='tr'?' → '+esc(kasaName(e.to)):''}</td><td class="${e.kind==='out'?'neg':''}">${fmtK(e.amount,k)}${e.kind==='tr'&&e.toAmount?` <span class="muted small">(${fmtK(e.toAmount,kasaById(e.to))})</span>`:''}</td><td class="l">${e.kind==='out'?`<b>${esc(e.cat||DIGER)}</b> `:''}${esc(e.note||'')}</td><td class="l small muted">${esc(e.bn||'')}</td><td><button class="b s d" data-act="khDel" data-id="${e.id}">Sil</button></td></tr>`}).join('')||'<tr><td class="l muted" colspan="7">Bu ay kasa hareketi yok.</td></tr>'}
+    </tbody></table>${pk.g?`<div class="small muted" style="margin-top:8px">Bu ay POS'lardan geçen ${fmt(pk.g)} ₺ için tahmini komisyon: <b>${fmt(pk.c)} ₺</b></div>`:''}`}
+  const kb=$('kasaBal');if(kb){const draw=()=>{const ks=kasaList();const B=withAll(ms=>kasaBalances(ms,todayStr()));
+      kb.innerHTML=ks.map(k=>{const b=B[k.id]||{bal:0};return`<div class="kpi"><div class="k">${esc(k.name)} <span class="muted">· ${KTYPE[k.type]||''}</span></div><div class="v ${b.bal<0?'neg':''}">${fmtK(b.bal,k)}</div></div>`}).join('')};
+    if(ALL.m)draw();loadAll().then(draw).catch(e=>{kb.innerHTML=`<div class="neg">${esc(errMsg(e))}</div>`})}}
+ACT.goYon=()=>{U.tab='yonetim';render()};
+ACT.khAdd=()=>{const kind=$('khKind').value,kasa=$('khKasa').value,to=$('khTo').value,a=parseNum($('khAmt').value),date=$('khDate').value;
+  if(!date){toast('Tarih seçin');return}if(!a){$('khAmt').focus();toast('Tutarı yazın');return}if(kind==='tr'&&to===kasa){toast('Hedef kasa farklı olmalı');return}
+  const e={date,kind,kasa,amount:a,note:$('khNote').value.trim(),...me()};if(kind==='tr'){e.to=to;const ta=parseNum($('khToAmt').value);if(ta&&$('khToAmt').offsetParent!==null)e.toAmount=ta}if(kind==='out')e.cat=$('khCat').value;
+  patchMonth(ym(date),{kh:{[uid()]:e}});ALL.at=0;$('khAmt').value='';$('khNote').value='';$('khToAmt').value='';if(ym(date)!==U.month){U.month=ym(date);render()}toast('Eklendi')};
+ACT.khDel=a=>{if(!confirm('Bu kasa hareketi silinsin mi?'))return;patchMonth(U.month,{kh:{[a.dataset.id]:DEL}});ALL.at=0};
+
+// Yönetim → kasalar ve kategoriler
+function yonKasaCard(){const ks=kasaList(),s=S.settings;
+  return`<div class="card"><h2>Kasalar</h2><p class="muted small">Nakit kasa, POS cihazları (banka komisyon oranıyla), banka hesapları ve döviz kasaları. Açılış bakiyesi, kasayı sisteme başlattığınız tarihteki paradır; o tarihten önceki kayıtlar bakiyeye eklenmez.</p>
+    <div class="scroll"><table><thead><tr><th class="l">Ad</th><th class="l">Tür</th><th>Komisyon %</th><th>Para birimi</th><th>Açılış bakiyesi</th><th>Açılış tarihi</th><th>Günlük net nakit buraya</th><th></th></tr></thead><tbody>
+    ${ks.map(k=>`<tr><td class="l in"><input class="w" data-kasa="${k.id}" data-kf="name" value="${esc(k.name)}"></td><td class="l">${KTYPE[k.type]||''}</td>
+      <td class="in">${k.type==='pos'?`<input data-kasa="${k.id}" data-kf="rate" value="${k.rate?fmt(k.rate):''}" placeholder="0" style="width:70px">`:'<span class="muted">—</span>'}</td>
+      <td>${k.type==='doviz'?`<select data-kasa="${k.id}" data-kf="cur">${['USD','EUR','GBP'].map(c=>`<option ${kCur(k)===c?'selected':''}>${c}</option>`).join('')}</select>`:'TL'}</td>
+      <td class="in"><input data-kasa="${k.id}" data-kf="open" value="${k.open?fmt(k.open):''}" placeholder="0"></td>
+      <td class="in"><input type="date" data-kasa="${k.id}" data-kf="openDate" value="${k.openDate||''}"></td>
+      <td>${k.type==='nakit'?`<input type="checkbox" data-kasa="${k.id}" data-kf="auto" ${k.auto?'checked':''}>`:'<span class="muted">—</span>'}</td>
+      <td><button class="b s d" data-act="kasaOff" data-id="${k.id}">Kaldır</button></td></tr>`).join('')||'<tr><td class="l muted" colspan="8">Henüz kasa yok.</td></tr>'}</tbody></table></div>
+    <h3>Yeni kasa ekle</h3><div class="row"><label class="f">Ad<input id="nKasaName" data-enter="kasaAdd" placeholder="ör. Garanti POS"></label>
+      <label class="f">Tür<select id="nKasaType">${Object.entries(KTYPE).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label>
+      <label class="f">Komisyon % (POS)<input id="nKasaRate" class="num" placeholder="0" style="width:90px"></label>
+      <label class="f">Açılış bakiyesi<input id="nKasaOpen" class="num" placeholder="0"></label>
+      <button class="b p" data-act="kasaAdd">Ekle</button></div></div>
+  <div class="card"><h2>Gider kategorileri</h2><p class="muted small">Virgülle ayırın. Harcama açıklamasından kategori otomatik bulunur (ör. "defter" → Ofis-Kırtasiye, "peçete" → Malzeme). Genel sayfasında her kalemin kategorisini elle de değiştirebilirsiniz.</p>
+    <textarea data-sf="expCats" rows="3" style="width:100%">${esc(s.expCats||CAT_DEF)}</textarea></div>`}
+ACT.kasaAdd=()=>{const n=$('nKasaName').value.trim();if(!n){$('nKasaName').focus();return}const type=$('nKasaType').value;const k={name:n,type,rate:parseNum($('nKasaRate').value)||0,open:parseNum($('nKasaOpen').value)||0,openDate:todayStr(),active:true,order:kasaList(1).length};
+  if(type==='doviz')k.cur='USD';if(type==='nakit'&&!kasaList().some(x=>x.type==='nakit'&&x.auto))k.auto=true;patchSettings({kasalar:{['k'+uid()]:k}});ALL.at=0;toast('Kasa eklendi')};
+ACT.kasaOff=a=>{if(!confirm('Bu kasa listeden kaldırılsın mı? Geçmiş hareketleri silinmez.'))return;patchSettings({kasalar:{[a.dataset.id]:{active:false}}})};
+CHANGE.push(t=>{if(U.tab!=='yonetim'||!t.dataset.kasa)return;const f=t.dataset.kf;let v=t.type==='checkbox'?t.checked:t.value;if(['rate','open'].includes(f))v=parseNum(v)||0;if(f==='name'&&!String(v).trim())return;patchSettings({kasalar:{[t.dataset.kasa]:{[f]:v}}});ALL.at=0;toast('Kaydedildi')});
+
+/* ================= YÖNETİCİ KOKPİTİ ================= */
+const C1='#009085',C2='#c45f17';
+function periodMonths(){if(U.kp==='yil'){const y=U.month.slice(0,4);return Array.from({length:12},(_,i)=>y+'-'+pad(i+1))}return[U.month]}
+function kpiCalc(ms){const r={ciro:0,iade:0,harcama:0,vergi:0,kasaGider:0,posKom:0,hekim:0,tekn:0,cats:{},docs:{}};
+  ms.forEach(m=>{const dt=monthDayTotals(m);r.ciro+=dt.toplam;r.harcama+=dt.harcama;r.vergi+=dt.vergi;r.iade+=sum(entries('iade',m).map(e=>e.amount));
+    const kg=monthKasaGider(m);r.kasaGider+=sum(Object.values(kg));r.posKom+=monthPosKom(m).c;
+    monthDoctors(m).forEach(d=>{const c=calcDoc(m,d);r.hekim+=c.yuzde-c.kkKes+c.impTutar+c.diger});r.tekn+=sum(calcTechs(m).map(x=>x.total));
+    const mc=monthCats(m);for(const c in mc)r.cats[c]=(r.cats[c]||0)+mc[c];for(const c in kg)r.cats[c]=(r.cats[c]||0)+kg[c];
+    monthDays(m).forEach(k=>{const x=getDay(k);for(const id in x.e){const v=+x.e[id]||0;if(v)r.docs[id]=(r.docs[id]||0)+v}})});
+  r.gider=r.harcama+r.kasaGider+r.posKom+r.hekim+r.tekn+r.iade;r.kar=r.ciro-r.gider;return r}
+function svgBars(rows,{h=200,series,neg}={}){// rows:[{label, vals:[...]}]
+  const W=640,pl=8,pr=8,pt=14,pb=34,n=rows.length,sN=series.length;const all=rows.flatMap(r=>r.vals);const mx=Math.max(1,...all),mn=Math.min(0,...all);
+  const y=v=>pt+(mx-v)/(mx-mn)*(h-pt-pb),y0=y(0),gw=(W-pl-pr)/n,bw=Math.max(3,Math.min(26,(gw-6)/sN-2));
+  let g=`<line x1="${pl}" x2="${W-pr}" y1="${y0}" y2="${y0}" stroke="#c9d1d9" stroke-width="1"/>`;
+  rows.forEach((r,i)=>{const cx=pl+gw*i+gw/2,start=cx-(sN*(bw+2)-2)/2;
+    r.vals.forEach((v,j)=>{const x=start+j*(bw+2),yy=y(Math.max(v,0)),hh=Math.max(1,Math.abs(y(v)-y0));const col=neg&&v<0?'var(--red)':series[j].c;
+      const rx=Math.min(4,bw/2);g+=`<g><title>${esc(r.label)} · ${esc(series[j].n)}: ${fmt(v)} ₺</title><rect x="${x-1}" y="${pt}" width="${bw+2}" height="${h-pt-pb}" fill="transparent"/><path d="${v>=0?`M${x},${y0}V${yy+rx}Q${x},${yy} ${x+rx},${yy}H${x+bw-rx}Q${x+bw},${yy} ${x+bw},${yy+rx}V${y0}Z`:`M${x},${y0}V${y0+hh-rx}Q${x},${y0+hh} ${x+rx},${y0+hh}H${x+bw-rx}Q${x+bw},${y0+hh} ${x+bw},${y0+hh-rx}V${y0}Z`}" fill="${col}"/></g>`});
+    g+=`<text x="${cx}" y="${h-pb+16}" text-anchor="middle" font-size="12" fill="var(--muted)">${esc(r.label)}</text>`});
+  return`<svg viewBox="0 0 ${W} ${h}" class="chart" role="img">${g}</svg>`}
+function hBars(list,col){const mx=Math.max(1,...list.map(r=>r.v));
+  return`<div class="hbars">${list.map(r=>`<div class="hb" title="${esc(r.k)}: ${fmt(r.v)} ₺"><div class="hbk">${esc(r.k)}</div><div class="hbt"><div style="width:${Math.max(1,r.v/mx*100)}%;background:${col}"></div></div><div class="hbv">${fmt(r.v)}</div></div>`).join('')}</div>`}
+const short=m=>{const t=TMONTHS[+m.slice(5)-1].slice(0,3);return t.charAt(0).toLocaleUpperCase('tr')+t.slice(1)};
+function renderKokpit(){U.kp=U.kp||'ay';
+  main.innerHTML=`<div class="card"><div class="row between"><h2 style="margin:0">Yönetici kokpiti</h2><div class="row">${monthBar()}<div class="seg"><button class="b s ${U.kp==='ay'?'p':''}" data-act="kpMode" data-v="ay">Ay</button><button class="b s ${U.kp==='yil'?'p':''}" data-act="kpMode" data-v="yil">Yıl (${U.month.slice(0,4)})</button></div></div></div>
+    <div id="kpBody"><div class="muted" style="margin-top:12px">Tüm aylar yükleniyor…</div></div></div>`;
+  loadAll().then(drawKokpit).catch(e=>{$('kpBody').innerHTML=`<div class="neg">${esc(errMsg(e))}</div>`})}
+ACT.kpMode=a=>{U.kp=a.dataset.v;renderKokpit()};
+function drawKokpit(){const el=$('kpBody');if(!el||U.tab!=='kokpit')return;
+  withAll(()=>{const ms=periodMonths(),r=kpiCalc(ms);const per=U.kp==='yil'?U.month.slice(0,4)+' yılı':monthName(U.month);
+    const tiles=[['Ciro',r.ciro],['İadeler',r.iade],['Günlük harcamalar',r.harcama],['  içindeki vergi',r.vergi],['Kasadan ödenen giderler',r.kasaGider],['POS komisyonu',r.posKom],['Hekim payları',r.hekim],['Teknisyen ödemeleri',r.tekn],['Toplam gider',r.gider]];
+    const end=U.month;const trend=Array.from({length:12},(_,i)=>shiftMonth(end,i-11)).map(m=>{const x=kpiCalc([m]);return{m,ciro:x.ciro,gider:x.gider,kar:x.kar}});
+    const cats=Object.entries(r.cats).map(([k,v])=>({k,v})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+    const docs=Object.entries(r.docs).map(([id,v])=>({k:docName(id),v})).sort((a,b)=>b.v-a.v);
+    const ks=kasaList(),B=kasaBalances(Object.keys(S.months).sort(),todayStr());
+    el.innerHTML=`<div class="hero"><div class="k">${per} · tahmini net klinik kârı</div><div class="v ${r.kar<0?'neg':''}">${fmtc(r.kar)}</div><div class="muted small">Ciro − iadeler − günlük harcamalar − kasadan ödenen giderler − POS komisyonu − hekim payları (yüzde − KK kesintisi + implant + diğer) − teknisyen işleri</div></div>
+      <div class="kpis">${tiles.map(([k,v])=>`<div class="kpi"><div class="k">${k.trim()===k?k:'<span style="padding-left:8px">↳ '+k.trim()+'</span>'}</div><div class="v">${fmtc(v)}</div></div>`).join('')}</div>
+      ${ks.length?`<h3>Kasa bakiyeleri (bugün)</h3><div class="kpis">${ks.map(k=>`<div class="kpi"><div class="k">${esc(k.name)}</div><div class="v ${B[k.id].bal<0?'neg':''}">${fmtK(B[k.id].bal,k)}</div></div>`).join('')}</div>`:''}
+      <div class="g2e"><div><h3>Son 12 ay: ciro ve toplam gider</h3><div class="lg"><span><i style="background:${C1}"></i>Ciro</span><span><i style="background:${C2}"></i>Toplam gider</span></div>${svgBars(trend.map(t=>({label:short(t.m),vals:[t.ciro,t.gider]})),{series:[{n:'Ciro',c:C1},{n:'Toplam gider',c:C2}]})}</div>
+        <div><h3>Son 12 ay: tahmini net kâr</h3><div class="lg"><span class="muted small">Eksi aylar kırmızı</span></div>${svgBars(trend.map(t=>({label:short(t.m),vals:[t.kar]})),{series:[{n:'Net kâr',c:C1}],neg:1})}</div></div>
+      <div class="g2e"><div><h3>Giderler kategoriye göre (${per})</h3>${cats.length?hBars(cats,C2):'<div class="muted small">Gider yok.</div>'}<div class="muted small" style="margin-top:6px">Hekim, teknisyen ve POS komisyonu hariç. "${NOCAT}" föyde toplamı girilip kalemleri yazılmayan kısımdır.</div></div>
+        <div><h3>Hekim / başlık bazında ciro (${per})</h3>${docs.length?hBars(docs,C1):'<div class="muted small">Kayıt yok.</div>'}</div></div>
+      <details style="margin-top:12px"><summary class="small">Son 12 ay tablo olarak</summary><div class="scroll"><table><thead><tr><th class="l">Ay</th><th>Ciro</th><th>Toplam gider</th><th>Net kâr</th></tr></thead><tbody>${trend.map(t=>`<tr><td class="l">${monthName(t.m)}</td><td>${fmt(t.ciro)}</td><td>${fmt(t.gider)}</td><td class="${t.kar<0?'neg':''}">${fmtc(t.kar)}</td></tr>`).join('')}</tbody></table></div></details>`})}
+
+/* Excel sayfaları */
+function shKategori(m){const c=monthCats(m),kg=monthKasaGider(m),rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Gider Kategorileri',b:1}],[],H(['Kategori','Günlük harcamalardan','Kasadan ödenen','Toplam'])];
+  const ks=[...new Set([...Object.keys(c),...Object.keys(kg)])].sort((a,b)=>((c[b]||0)+(kg[b]||0))-((c[a]||0)+(kg[a]||0)));ks.forEach(k=>rows.push([k,c[k]||0,kg[k]||0,(c[k]||0)+(kg[k]||0)]));
+  rows.push(B(['TOPLAM',sum(Object.values(c)),sum(Object.values(kg)),sum(Object.values(c))+sum(Object.values(kg))]));return{name:'Gider Kategorileri',rows}}
+function shKasa(m){const rows=[[{v:(S.settings.clinicName||'')+' — '+monthName(m)+' Kasa Hareketleri',b:1}],[],H(['Tarih','İşlem','Kasa','Hedef kasa','Tutar','Hedefe geçen','Kategori','Açıklama','Giren'])];
+  kasaMoves(m).forEach(e=>rows.push([trDate(e.date),e.kind==='in'?'Giriş':e.kind==='out'?'Çıkış':'Transfer',kasaName(e.kasa),e.to?kasaName(e.to):'',e.amount,e.toAmount||'',e.kind==='out'?(e.cat||DIGER):'',e.note||'',e.bn||'']));
+  const ks=kasaList(1).filter(k=>k.type==='pos');if(ks.length){rows.push([],H(['POS','Geçen tutar','Komisyon %','Komisyon']));ks.forEach(k=>{let g=0;monthDays(m).forEach(d=>g+=+posDay(getDay(d))[k.id]||0);if(g)rows.push([k.name,g,+k.rate||0,g*(+k.rate||0)/100])})}
+  return{name:'Kasa',rows}}
 
 /* ===== PAROLALI EXCEL (Office şifreleme) ===== */
 const rdU32=(a,o)=>new DataView(a.buffer,a.byteOffset,a.byteLength).getUint32(o,true);

@@ -121,6 +121,7 @@ td.in input{width:110px;padding:4px 6px;text-align:right}td.in input.w{width:160
 .chart{width:100%;height:auto;display:block}.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 4px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .hbars{display:grid;gap:5px}.hb{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:8px;align-items:center;font-size:13px}.hbk{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hbt{background:#eef1f4;border-radius:4px;height:12px;overflow:hidden}.hbt div{height:100%;border-radius:0 4px 4px 0}.hbv{font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
 .hero{margin-top:12px;padding:12px 14px;background:var(--pri2);border:1px solid #b9dcdc;border-radius:12px}.hero .k{font-size:13px;color:var(--muted)}.hero .v{font-size:28px;font-weight:800;margin:2px 0}
+.pw{position:relative;display:block}.pw input{width:100%;padding-right:74px}.pwt{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--pri);font:inherit;font-size:13px;font-weight:600;padding:6px 8px;cursor:pointer;border-radius:7px}.pwt:hover{background:var(--pri2)}
 .seg{display:flex;gap:4px}tr.late td{background:#fff4f2}.ptabs{flex-wrap:wrap}.kpi-bad{background:#fff4f2;border-color:#f3c3be}.kpi-bad .v{color:var(--red)}a.b{text-decoration:none;display:inline-block}.cklist{display:grid;gap:4px}.ck{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px}.ck input{width:18px;height:18px;margin:0;accent-color:var(--pri)}.ck.on{background:var(--pri2);border-color:#b9dcdc}.ck.on span{color:var(--muted)}.ck em{font-style:normal;font-size:12px;color:var(--muted);white-space:nowrap}@media(max-width:700px){.ck{grid-template-columns:22px 1fr}.ck em{grid-column:2}}
 .alist{display:grid;gap:6px}.al{display:grid;grid-template-columns:190px 1fr;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:13px}.al b{font-weight:600}.al-min,.al-skt0{background:#fff4f2;border-color:#f3c3be}.al-skt{background:#fff8e6;border-color:#f3dca1}.al-fiyat{background:#eaf6ee;border-color:#bfe3cb}@media(max-width:700px){.al{grid-template-columns:1fr;gap:2px}}.g2e{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:14px}@media(max-width:700px){.g2e{grid-template-columns:minmax(0,1fr)}}.cat-s{font-size:12px;padding:2px 4px;margin-top:3px;max-width:100%}
 .hint{background:#fff8e6;border:1px solid #f3dca1;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}
@@ -141,7 +142,7 @@ pre{background:#0f1720;color:#e6edf3;padding:12px;border-radius:8px;overflow:aut
 <div id="login" class="lwrap" hidden><div class="lcard">
   <h1>Klinik Hesap Paneli</h1><p class="muted">Size verilen e-posta ve şifreyle giriş yapın.</p>
   <label class="f">E-posta<input id="lgEmail" type="email" autocomplete="username"></label>
-  <label class="f">Şifre<input id="lgPw" type="password" autocomplete="current-password"></label>
+  <label class="f">Şifre<span class="pw"><input id="lgPw" type="password" autocomplete="current-password"><button type="button" class="pwt" data-pw="lgPw" aria-label="Şifreyi göster">Göster</button></span></label>
   <button class="b p" id="lgBtn">Giriş yap</button><button class="b s" id="lgReset">Şifremi unuttum</button>
   <div id="lgMsg" class="small neg"></div></div></div>
 <div id="gate" class="lwrap" hidden></div>
@@ -312,7 +313,7 @@ async function makeFirebaseStore(cfg){
   const onErr=e=>{console.error(e);toast(errMsg(e),1)};
   return{mode:'cloud',
     onAuth:cb=>Au.onAuthStateChanged(auth,u=>cb(u?{uid:u.uid,email:u.email}:null)),
-    login:(e,p)=>Au.signInWithEmailAndPassword(auth,e,p),
+    login:async(e,p)=>{await Au.setPersistence(auth,Au.browserSessionPersistence);sessionStorage.setItem('aksaOturum','1');return Au.signInWithEmailAndPassword(auth,e,p)},
     logout:()=>Au.signOut(auth),
     reset:e=>Au.sendPasswordResetEmail(auth,e),
     getOwner:async()=>{const s=await F.getDoc(D('meta','owner'));return s.exists()?s.data():null},
@@ -767,7 +768,7 @@ function renderYonetim(){
       <td><button class="b s" data-act="userReset" data-email="${esc(u.email||'')}">Şifre sıfırlama e-postası</button></td></tr>`}).join('')}</tbody></table>
     <h3>Yeni kullanıcı ekle</h3><div class="row">
       <label class="f">Ad soyad<input id="nuName"></label><label class="f">E-posta<input id="nuEmail" type="email"></label>
-      <label class="f">Geçici şifre (en az 6)<input id="nuPw" type="text"></label>
+      <label class="f">Geçici şifre (en az 6)<span class="pw"><input id="nuPw" type="password" autocomplete="new-password"><button type="button" class="pwt" data-pw="nuPw">Göster</button></span></label>
       <label class="f">Rol<select id="nuRole"><option value="staff">Personel</option><option value="admin">Yönetici</option></select></label>
       <button class="b p" data-act="userAdd">Kullanıcı ekle</button></div>
     <p class="muted small">Kullanıcıya e-postasını ve geçici şifresini iletin; o da isterse "Şifremi unuttum" ile kendi şifresini belirler. Ayrılan birinin "Aktif" kutusunu kaldırın, panele giremez.</p></div>
@@ -791,7 +792,7 @@ function renderYonetim(){
   <div class="card"><h2>E-posta ile otomatik yedek ve ay sonu raporu</h2>
     <div class="row"><label class="f">Yedeklerin gideceği e-posta<input data-sf="email" value="${esc(s.email)}" style="width:280px"></label>
     <label class="f" style="flex:1;min-width:300px">Gönderici adresi (Apps Script URL)<input data-sf="scriptUrl" value="${esc(s.scriptUrl)}" placeholder="https://script.google.com/macros/s/.../exec"></label></div>
-    <div class="row" style="margin-top:10px"><label class="c"><input type="checkbox" data-sf="autoDaily" ${s.autoDaily?'checked':''}> Her gün yedek gönder</label><label class="c"><input type="checkbox" data-sf="autoMonthly" ${s.autoMonthly?'checked':''}> Ay bitince raporu gönder</label>
+    <div class="row" style="margin-top:10px"><label class="c"><input type="checkbox" data-sf="autoDaily" ${s.autoDaily?'checked':''}> Otomatik yedek gönder</label><label class="f" style="flex-direction:row;align-items:center;gap:6px">Sıklık <select data-sf="backupFreq"><option value="gun" ${s.backupFreq!=='hafta'?'selected':''}>Her gün</option><option value="hafta" ${s.backupFreq==='hafta'?'selected':''}>Haftada bir</option></select></label><label class="c"><input type="checkbox" data-sf="autoMonthly" ${s.autoMonthly?'checked':''}> Ay bitince raporu gönder</label>
     <button class="b s" data-act="mailTest">Test e-postası</button><button class="b s" data-act="mailBackup">Şimdi yedek gönder</button></div>
     <p class="muted small">Veriler zaten bulutta saklanıyor; bu e-posta ek bir güvencedir. Bir yönetici paneli o gün ilk açtığında gönderilir.</p>
     <details><summary style="cursor:pointer;font-weight:600">Kurulum adımları ve kod</summary><ol class="small">
@@ -860,7 +861,12 @@ async function allWorkbook(){return withMonths(ms=>{const g=[H(['Tarih','Doktor 
   ms.forEach(m=>monthDays(m).forEach(k=>{const x=getDay(k);Object.keys(x.e).forEach(id=>{if(+x.e[id])g.push([trDate(k),docName(id),'Kazanç',x.e[id],'',''])});if(x.h)g.push([trDate(k),'Günün toplam harcaması','Harcama (toplam)',x.h,'',''] );if(x.vg)g.push([trDate(k),'Harcamanın içindeki vergi','Vergi',x.vg,'','']);expList(x).forEach(e=>g.push([trDate(k),e.d||'—',x.h?'Harcama dökümü (toplamın içinde)':'Harcama',e.a,'',e.bn||'']));if(x.kk)g.push([trDate(k),'Günlük KK toplamı','Kredi kartı',x.kk,'','']);if(x.n)g.push([trDate(k),'','Not','',x.n,''])}));
   const led=t=>{const r=[H(t==='lab'?['Tarih','Ay','Teknisyen','Doktor','Tutar','Açıklama','Giren']:['Tarih','Ay','Kime','Tutar','Açıklama','Giren'])];ms.forEach(m=>entries(t,m).forEach(e=>r.push(t==='lab'?[trDate(e.date),monthName(m),techName(e.techId),e.docId?docName(e.docId):'Klinik',e.amount,e.note||'',e.bn||'']:[trDate(e.date),monthName(m),whoLabel(e),e.amount,e.note||'',e.bn||''])));return r};
   const ay=[];ms.forEach(m=>{ay.push([{v:monthName(m),b:1}],H(AY_H),...ayRows(m),[])});
-  return buildXlsx([{name:'Aylık Hesaplar',rows:ay},{name:'Günlük Kayıtlar',rows:g},{name:'Kredi Kartı',rows:led('kk')},{name:'Fatura',rows:led('fatura')},{name:'Avans',rows:led('avans')},{name:'İade',rows:led('iade')},{name:'Teknisyen İşleri',rows:led('lab')}])})}
+  return buildXlsx([{name:'Aylık Hesaplar',rows:ay},{name:'Günlük Kayıtlar',rows:g},{name:'Kredi Kartı',rows:led('kk')},{name:'Fatura',rows:led('fatura')},{name:'Avans',rows:led('avans')},{name:'İade',rows:led('iade')},{name:'Teknisyen İşleri',rows:led('lab')},...extraAllSheets(ms)])})}
+function extraAllSheets(ms){const cat=(fn,name)=>{const rows=[];ms.forEach(m=>{const r=fn(m).rows.slice(2);if(r.length>2||(r.length>1&&r.slice(1).some(x=>x&&x.length&&x[0]!=='TOPLAM')))rows.push([{v:monthName(m),b:1}],...r,[])});return rows.length?{name,rows}:null};
+  const oz=[H(['Ay','Ciro','İadeler','Günlük harcama','İçindeki vergi','Kasadan ödenen giderler','POS komisyonu','Hekim payları','Teknisyen','Toplam gider','Tahmini net kâr'])];
+  ms.forEach(m=>{const r=kpiCalc([m]);if(r.ciro||r.gider)oz.push([monthName(m),r.ciro,r.iade,r.harcama,r.vergi,r.kasaGider,r.posKom,r.hekim,r.tekn,r.gider,r.kar])});
+  const last=ms[ms.length-1]||ym(todayStr());
+  return[{name:'Aylık Özet',rows:oz},cat(shVergi,'Vergiler'),cat(shKategori,'Gider Kategorileri'),cat(shKasa,'Kasa'),cat(shLab,'Lab Takip'),cat(shSteril,'Sterilizasyon'),shStok(last),shHasta(last)].filter(Boolean)}
 ACT.xlsGenel=()=>download(`gunluk_${U.month}.xlsx`,buildXlsx([shGenel(U.month)]),XMIME);
 ACT.xlsLedger=a=>download(`${a.dataset.type}_${U.month}.xlsx`,buildXlsx([shLedger(a.dataset.type,U.month)]),XMIME);
 ACT.xlsMonth=async()=>{if(!S.months[U.month]){const d=await store.getMonth(U.month);S.months[U.month]=d||{}}download(`aylik-rapor_${U.month}.xlsx`,monthWorkbook(U.month),XMIME)};
@@ -899,8 +905,9 @@ async function sendMail(subject,html,attachments){const s=S.settings;if(!s.scrip
 const cname=()=>S.settings.clinicName||'Klinik';
 const tbl=(head,rows)=>`<table cellpadding="5" style="border-collapse:collapse;font-family:Arial;font-size:13px">${head?'<tr>'+head.map(h=>`<th style="background:#dcedec;border:1px solid #ccc;text-align:left">${esc(h)}</th>`).join('')+'</tr>':''}${rows.map(r=>'<tr>'+r.map((c,i)=>`<td style="border:1px solid #ddd;${i?'text-align:right':''}">${typeof c==='number'?fmt(c):esc(c)}</td>`).join('')+'</tr>').join('')}</table>`;
 async function sendBackupMail(reason){const t=todayStr(),m=ym(t);const b=await fullBackup();
-  await sendMail(`[${cname()}] Günlük yedek – ${trDate(t)}`,`<p><b>${esc(cname())}</b> — ${esc(reason)} (${trDate(t)})</p><p>Ekteki .json dosyası tam yedektir (Panel → Yönetim → Yedekten geri yükle). .xlsx dosyası bu ayın raporudur.</p>`,
-    [{name:`klinik-panel-yedek_${t}.json`,mimeType:'application/json',base64:u8ToB64(enc.encode(JSON.stringify(b)))},{name:`aylik-rapor_${m}.xlsx`,mimeType:XMIME,base64:u8ToB64(monthWorkbook(m))}])}
+  const all=await allWorkbook();
+  await sendMail(`[${cname()}] ${S.settings.backupFreq==='hafta'?'Haftalık':'Günlük'} yedek – ${trDate(t)}`,`<p><b>${esc(cname())}</b> — ${esc(reason)} (${trDate(t)})</p><p>Ekler:</p><ul><li><b>tum-rapor</b> (.xlsx): Panele girilmiş bütün ayların raporu.</li><li><b>aylik-rapor</b> (.xlsx): Bu ayın ayrıntılı raporu (doktor ödemeleri, kasa, stok, sterilizasyon, hasta alacakları…).</li><li><b>yedek</b> (.json): Tam yedek. Gerekirse Panel → Yönetim → Yedekten geri yükle ile geri yüklenir.</li></ul>`,
+    [{name:`tum-rapor_${t}.xlsx`,mimeType:XMIME,base64:u8ToB64(all)},{name:`aylik-rapor_${m}.xlsx`,mimeType:XMIME,base64:u8ToB64(monthWorkbook(m))},{name:`klinik-panel-yedek_${t}.json`,mimeType:'application/json',base64:u8ToB64(enc.encode(JSON.stringify(b)))}])}
 async function sendMonthReport(m){if(!S.months[m])S.months[m]=await store.getMonth(m)||{};
   const docs=monthDoctors(m),cs=docs.map(d=>calcDoc(m,d)),tc=calcTechs(m);const dt=monthDayTotals(m);const vl=monthVergiList(m);
   const html=`<h2 style="font-family:Arial">${esc(cname())} — ${monthName(m)} Ay Sonu Raporu</h2>${tbl(['Toplam ciro','Harcama','İçindeki vergi','Kredi kartı','Net nakit'],[[dt.toplam,dt.harcama,dt.vergi,dt.kk,dt.net]])}${vl.length?`<h3 style="font-family:Arial">Ödenen vergiler</h3>${tbl(['Tarih','Açıklama','Tutar'],[...vl.map(v=>[trDate(v.date),v.d,v.a]),['TOPLAM','',dt.vergi]])}`:''}
@@ -913,7 +920,7 @@ ACT.mailBackup=async()=>{if(!mailReady())return;try{await sendBackupMail('Elle g
 ACT.mailMonth=async()=>{if(!mailReady())return;try{await sendMonthReport(U.month);toast('Rapor gönderildi')}catch(e){alert(errMsg(e))}};
 let autoBusy=false;
 async function autoTasks(){if(autoBusy||!isAdmin())return;const s=S.settings;if(!s.scriptUrl||!s.email)return;autoBusy=true;
-  try{const t=todayStr();if(s.autoDaily&&s.lastDailyBackup!==t){await patchSettings({lastDailyBackup:t});await sendBackupMail('Günlük otomatik yedek')}
+  try{const t=todayStr();const wk=s.backupFreq==='hafta';if(s.autoDaily&&s.lastDailyBackup!==t&&(!wk||!s.lastDailyBackup||daysBetween(s.lastDailyBackup,t)>=7)){await patchSettings({lastDailyBackup:t});await sendBackupMail(wk?'Haftalık otomatik yedek':'Günlük otomatik yedek')}
     const prev=shiftMonth(ym(t),-1);if(s.autoMonthly&&(s.lastMonthlyReport||'')<prev){const d=await store.getMonth(prev);if(d){await patchSettings({lastMonthlyReport:prev});S.months[prev]=S.months[prev]||d;await sendMonthReport(prev)}}
     await stockMail()}catch(e){console.error(e)}finally{autoBusy=false}}
 
@@ -1705,7 +1712,7 @@ function renderImport(){
     <p class="muted small">Silince o aktarımla gelen kayıtlar kaldırılır; elle girilen kayıtlar kalır. Aktarımla eklenen isimler başka yerde kullanılmıyorsa onlar da silinir.</p></div>`;
   if(IMP.pw)h+=`<div class="card"><h2>Bu Excel dosyası parolayla korunuyor</h2>
     <p>${esc(IMP.pw.name)} dosyasını açmak için Excel'de açarken yazdığınız parolayı girin. Parola sadece bu bilgisayarda dosyayı açmak için kullanılır; hiçbir yere gönderilmez, kaydedilmez.</p>
-    <div class="row"><label class="f">Excel parolası<input id="impPw" type="password" autocomplete="off" data-enter="impPw"></label><button class="b p" data-act="impPw" ${IMP.pw.busy?'disabled':''}>${IMP.pw.busy?'Açılıyor… (birkaç saniye)':'Dosyayı aç'}</button><button class="b" data-act="impPwCancel">Vazgeç</button></div>
+    <div class="row"><label class="f">Excel parolası<span class="pw"><input id="impPw" type="password" autocomplete="off" data-enter="impPw"><button type="button" class="pwt" data-pw="impPw">Göster</button></span></label><button class="b p" data-act="impPw" ${IMP.pw.busy?'disabled':''}>${IMP.pw.busy?'Açılıyor… (birkaç saniye)':'Dosyayı aç'}</button><button class="b" data-act="impPwCancel">Vazgeç</button></div>
     ${IMP.pw.err?`<p class="neg">${esc(IMP.pw.err)}</p>`:''}</div>`;
   if(IMP.sheets){const ms=allMonthsFound(),nn=newNames();
     h+=`<div class="card"><h2>Bulunanlar</h2>
@@ -2012,7 +2019,9 @@ async function boot(){
   if(FIREBASE_CONFIG){try{store=await makeFirebaseStore(FIREBASE_CONFIG)}catch(e){gate(`<h2>Panel yüklenemedi</h2><p>İnternet bağlantınızı kontrol edip sayfayı yenileyin.</p><p class="muted small">${esc(e.message)}</p>`);return}}
   else{store=makeMemoryStore();$('demo').hidden=false}
   store=withAudit(store);
-  store.onAuth(u=>{onUser(u)})}
+  store.onAuth(u=>{if(u&&store.mode==='cloud'&&!sessionStorage.getItem('aksaOturum')){store.logout();return}onUser(u)})}
+// Şifreyi göster / gizle
+document.addEventListener('click',e=>{const b=e.target.closest('.pwt');if(!b)return;e.preventDefault();const i=document.getElementById(b.dataset.pw);if(!i)return;const show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'Gizle':'Göster';b.setAttribute('aria-label',show?'Şifreyi gizle':'Şifreyi göster');i.focus()});
 boot();
 
 </script>
